@@ -1,21 +1,14 @@
-import { useState, useEffect } from 'react'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import Register from './pages/Register'
+import Login from './pages/Login'
 
 function App() {
-  const [message, setMessage] = useState('Chargement...')
-
-  useEffect(() => {
-    fetch('http://localhost:8000/api/test')
-      .then((response) => response.json())
-      .then((data) => setMessage(data.message))
-      .catch(() => setMessage('Erreur : impossible de contacter Symfony'))
-  }, [])
-
   return (
-    <div style={{ padding: '40px', fontFamily: 'sans-serif' }}>
-      <h1>Discipline Leveling</h1>
-      <p>Message reçu de l'API Symfony :</p>
-      <p><strong>{message}</strong></p>
-    </div>
+    <Routes>
+      <Route path="/register" element={<Register />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/" element={<Navigate to="/register" replace />} />
+    </Routes>
   )
 }
 
