@@ -21,6 +21,12 @@ class DisciplineTracking
     #[ORM\Column]
     private ?int $exp = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?int $lpGoal = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $lpStarting = null;
+
     #[ORM\Column(length: 5)]
     private ?string $rank = null;
 
@@ -39,15 +45,15 @@ class DisciplineTracking
     private Collection $quests;
 
     /**
-     * @var Collection<int, Activity>
+     * @var Collection<int, LolMatch>
      */
-    #[ORM\OneToMany(targetEntity: Activity::class, mappedBy: 'disciplineTracking', orphanRemoval: true)]
-    private Collection $activities;
+    #[ORM\OneToMany(targetEntity: LolMatch::class, mappedBy: 'disciplineTracking', orphanRemoval: true)]
+    private Collection $lolMatches;
 
     public function __construct()
     {
         $this->quests = new ArrayCollection();
-        $this->activities = new ArrayCollection();
+        $this->lolMatches = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -75,6 +81,30 @@ class DisciplineTracking
     public function setExp(int $exp): static
     {
         $this->exp = $exp;
+
+        return $this;
+    }
+
+    public function getLpGoal(): ?int
+    {
+        return $this->lpGoal;
+    }
+
+    public function setLpGoal(?int $lpGoal): static
+    {
+        $this->lpGoal = $lpGoal;
+
+        return $this;
+    }
+
+    public function getLpStarting(): ?int
+    {
+        return $this->lpStarting;
+    }
+
+    public function setLpStarting(?int $lpStarting): static
+    {
+        $this->lpStarting = $lpStarting;
 
         return $this;
     }
@@ -145,31 +175,32 @@ class DisciplineTracking
     }
 
     /**
-     * @return Collection<int, Activity>
+     * @return Collection<int, LolMatch>
      */
-    public function getActivities(): Collection
+    public function getLolMatches(): Collection
     {
-        return $this->activities;
+        return $this->lolMatches;
     }
 
-    public function addActivity(Activity $activity): static
+    public function addLolMatch(LolMatch $lolMatch): static
     {
-        if (!$this->activities->contains($activity)) {
-            $this->activities->add($activity);
-            $activity->setDisciplineTracking($this);
+        if (!$this->lolMatches->contains($lolMatch)) {
+            $this->lolMatches->add($lolMatch);
+            $lolMatch->setDisciplineTracking($this);
         }
 
         return $this;
     }
 
-    public function removeActivity(Activity $activity): static
+    public function removeLolMatch(LolMatch $lolMatch): static
     {
-        if ($this->activities->removeElement($activity)) {
-            if ($activity->getDisciplineTracking() === $this) {
-                $activity->setDisciplineTracking(null);
+        if ($this->lolMatches->removeElement($lolMatch)) {
+            if ($lolMatch->getDisciplineTracking() === $this) {
+                $lolMatch->setDisciplineTracking(null);
             }
         }
 
         return $this;
     }
+
 }

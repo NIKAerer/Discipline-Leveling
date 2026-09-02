@@ -21,7 +21,7 @@ class Activity
 
     #[ORM\ManyToOne(inversedBy: 'activities')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?DisciplineTracking $disciplineTracking = null;
+    private ?Quest $quest = null;
 
     public function getId(): ?int
     {
@@ -52,15 +52,25 @@ class Activity
         return $this;
     }
 
-    public function getDisciplineTracking(): ?DisciplineTracking
+    public function getQuest(): ?Quest
     {
-        return $this->disciplineTracking;
+        return $this->quest;
     }
 
-    public function setDisciplineTracking(?DisciplineTracking $disciplineTracking): static
+    public function setQuest(?Quest $quest): static
     {
-        $this->disciplineTracking = $disciplineTracking;
+        $this->quest = $quest;
 
         return $this;
+    }
+
+    /**
+     * Convenience accessor — an Activity no longer stores DisciplineTracking
+     * directly (see migration Version20260829180000), it's derived from the
+     * Quest it validates.
+     */
+    public function getDisciplineTracking(): ?DisciplineTracking
+    {
+        return $this->quest?->getDisciplineTracking();
     }
 }
