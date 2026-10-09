@@ -3,7 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Repository\DisciplineTrackingRepository;
+use App\Service\AccountDeleter;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -77,34 +77,13 @@ class ProfileController
     }
 
     #[Route('/api/profile', name: 'api_profile_delete', methods: ['DELETE'])]
-    public function delete(EntityManagerInterface $em, DisciplineTrackingRepository $disciplineTrackingRepository, #[CurrentUser] ?User $user): JsonResponse
+    public function delete(AccountDeleter $accountDeleter, #[CurrentUser] ?User $user): JsonResponse
     {
         if (!$user) {
             return new JsonResponse(['error' => 'Not authenticated'], 401);
         }
 
-        // No cascade/orphanRemoval is configured between User and DisciplineTracking,
-        // so the related rows (and their own Quest/Activity children) are removed
-        // by hand, in dependency order, before the user itself.
-        $trackings = $disciplineTrackingRepository->findBy(['user' => $user]);
-
-        foreach ($trackings as $tracking) {
-            foreach ($tracking->getQuests() as $quest) {
-                foreach ($quest->getActivities() as $activity) {
-                    $em->remove($activity);
-                }
-                $em->remove($quest);
-            }
-
-            foreach ($tracking->getLolMatches() as $lolMatch) {
-                $em->remove($lolMatch);
-            }
-
-            $em->remove($tracking);
-        }
-
-        $em->remove($user);
-        $em->flush();
+        $accountDeleter->delete($user);
 
         return new JsonResponse(['message' => 'Account deleted']);
     }
