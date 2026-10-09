@@ -484,14 +484,16 @@ label {
   display: flex;
   align-items: center;
   gap: 64px;
-  padding: 80px 0;
+  padding-top: 80px;
+  padding-bottom: 80px;
 }
 
 @media (max-width: 900px) {
   .hero {
     flex-direction: column;
     align-items: stretch;
-    padding: 48px 0;
+    padding-top: 48px;
+    padding-bottom: 48px;
     gap: 32px;
   }
 }
@@ -892,19 +894,19 @@ label {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  flex: 1;
+  flex: 1 1 220px;
   min-width: 0;
 }
 
 .heatmap {
   display: grid;
-  grid-template-columns: repeat(15, 18px);
+  /* Les cases rétrécissent si la place manque, au lieu de déborder. */
+  grid-template-columns: repeat(15, minmax(0, 18px));
   gap: 5px;
 }
 
 .heatmap-cell {
-  width: 18px;
-  height: 18px;
+  aspect-ratio: 1;
   border-radius: 3px;
   background: var(--bg-track);
 }
@@ -917,7 +919,7 @@ label {
 
 @media (max-width: 560px) {
   .heatmap {
-    grid-template-columns: repeat(10, 18px);
+    grid-template-columns: repeat(10, minmax(0, 18px));
   }
 }
 

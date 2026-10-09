@@ -54,3 +54,72 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+
+  e2e:
+    name: Bout en bout (Playwright)
+    runs-on: ubuntu-latest
+    # Autorise le job à pousser les captures d'écran sur la branche de la PR.
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Sur une PR, on travaille sur la branche elle-même (et pas sur le
+          # commit de fusion) pour pouvoir y ajouter les captures.
+          ref: ${{ github.head_ref || github.ref }}
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_sqlite, intl
+          coverage: none
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      # Le serveur intégré de PHP (php -S) ne transmet pas les variables
+      # d'environnement du job à Symfony : on passe donc par .env.local,
+      # exactement comme un développeur en local.
+      - name: Préparer l'API (clés JWT, base, compte de démo)
+        working-directory: api
+        run: |
+          printf 'APP_ENV=dev\nAPP_SECRET=e2e_only_not_a_secret\nJWT_PASSPHRASE=e2e_only_not_a_secret\n' > .env.local
+          composer install --no-interaction --no-progress --prefer-dist
+          composer setup
+
+      - name: Installer le front et Chromium
+        working-directory: app
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Lancer les tests de bout en bout (avec captures d'écran)
+        working-directory: app
+        run: |
+          mkdir -p ../docs/screenshots
+          SCREENSHOTS=1 npm run test:e2e
+
+      # Les captures ne sont ajoutées au dépôt que si elles n'y sont pas
+      # encore : pour les régénérer, il suffit de supprimer docs/screenshots.
+      - name: Ajouter les captures d'écran au dépôt
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          if git ls-files --error-unmatch docs/screenshots > /dev/null 2>&1; then
+            echo "Captures déjà présentes dans le dépôt, rien à faire."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/screenshots
+          git commit -m "Ajoute les captures d'écran générées par Playwright [skip ci]"
+          git push
+
+      - name: Publier le rapport en cas d'échec
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: app/test-results/
