@@ -3,6 +3,11 @@ FROM dunglas/frankenphp:1-php8.4
 
 RUN install-php-extensions pdo_sqlite intl opcache zip
 
+# L'image donne au binaire frankenphp le droit d'écouter sur les ports < 1024.
+# Render (comme beaucoup d'hébergeurs) interdit ce type de permission et refuse
+# alors de lancer le serveur. On écoute sur un port > 1024, on la retire donc.
+RUN setcap -r /usr/local/bin/frankenphp
+
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 ENV APP_ENV=prod \
