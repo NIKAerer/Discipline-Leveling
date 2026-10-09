@@ -1,16 +1,22 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import NavBar from '../components/NavBar'
+import HistoryPanel from '../components/HistoryPanel'
 import { apiFetch } from '../utils/api'
 
 function Dashboard() {
     const [dashboard, setDashboard] = useState(null)
+    const [history, setHistory] = useState(null)
     const navigate = useNavigate()
 
     useEffect(() => {
         apiFetch('/api/dashboard')
             .then((response) => response.json())
             .then((data) => setDashboard(data))
+
+        apiFetch('/api/history')
+            .then((response) => (response.ok ? response.json() : null))
+            .then((data) => setHistory(data))
     }, [])
 
     if (!dashboard) {
@@ -44,6 +50,8 @@ function Dashboard() {
                     </div>
                 </div>
 
+                {history && <HistoryPanel history={history} />}
+
                 <div>
                     <h2 className="section-title">Your disciplines</h2>
                     <div className="disciplines-grid">
@@ -71,7 +79,21 @@ function Dashboard() {
                 <div>
                     <h2 className="section-title">Recent activity</h2>
                     <div className="panel activity-list">
-                        <p className="activity-empty">No activity yet</p>
+                        {!history || history.recent.length === 0 ? (
+                            <p className="activity-empty">No activity yet. Validate a quest to start your streak.</p>
+                        ) : (
+                            history.recent.map((item, index) => (
+                                <div className="activity-row" key={`${item.date}-${index}`}>
+                                    <span>
+                                        {item.label}
+                                        <span className="activity-meta"> &middot; {item.discipline} &middot; {item.date}</span>
+                                    </span>
+                                    <span className={item.expWon >= 0 ? 'activity-xp-positive' : 'activity-xp-negative'}>
+                                        {item.expWon >= 0 ? '+' : ''}{item.expWon} XP
+                                    </span>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
             </div>

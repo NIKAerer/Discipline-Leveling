@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import NavBar from '../components/NavBar'
+import HistoryPanel from '../components/HistoryPanel'
 import { apiFetch, extractErrorMessage } from '../utils/api'
 
 function QuestSection({ title, danger, items, onToggle, adding, onOpenAdd, onCloseAdd, templates, onAddFromTemplate, newLabel, setNewLabel, newXp, setNewXp, onSubmitCustom, formError }) {
@@ -104,6 +105,13 @@ function DisciplineDetail() {
     const [newLabel, setNewLabel] = useState('')
     const [newXp, setNewXp] = useState('10')
     const [formError, setFormError] = useState('')
+    const [history, setHistory] = useState(null)
+
+    const loadHistory = useCallback(() => {
+        apiFetch(`/api/history?disciplineId=${id}`)
+            .then((response) => (response.ok ? response.json() : null))
+            .then((data) => setHistory(data))
+    }, [id])
 
     useEffect(() => {
         apiFetch(`/api/character/${id}`)
@@ -120,7 +128,9 @@ function DisciplineDetail() {
         apiFetch(`/api/disciplines/${id}/quest-templates`)
             .then((response) => response.json())
             .then((data) => setTemplates(data))
-    }, [id])
+
+        loadHistory()
+    }, [id, loadHistory])
 
     async function handleSave(e) {
         e.preventDefault()
@@ -161,7 +171,9 @@ function DisciplineDetail() {
                 ...prev,
                 exp: data.disciplineExp,
                 rank: data.disciplineRank,
+                progressPercent: data.disciplineProgressPercent,
             }))
+            loadHistory()
         } catch {
             // Silent — the checkbox just won't move, which is enough signal here.
         }
@@ -291,6 +303,8 @@ function DisciplineDetail() {
                     {error && <p className="msg-error" style={{ marginTop: '16px' }}>{error}</p>}
                     {saved && <p className="msg-success" style={{ marginTop: '16px' }}>Saved!</p>}
                 </div>
+
+                {history && <HistoryPanel history={history} />}
 
                 <div style={{ marginBottom: '32px' }}>
                     <QuestSection

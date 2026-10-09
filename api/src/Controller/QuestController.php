@@ -131,6 +131,7 @@ class QuestController
             'validatedToday' => true,
             'disciplineExp' => $tracking->getExp(),
             'disciplineRank' => $tracking->getRank(),
+            'disciplineProgressPercent' => $rankCalculator->progressPercent($tracking->getExp()),
             'expTotal' => $user->getExpTotal(),
             'rank' => $user->getRank(),
         ]);
@@ -167,6 +168,7 @@ class QuestController
             'validatedToday' => false,
             'disciplineExp' => $tracking->getExp(),
             'disciplineRank' => $tracking->getRank(),
+            'disciplineProgressPercent' => $rankCalculator->progressPercent($tracking->getExp()),
             'expTotal' => $user->getExpTotal(),
             'rank' => $user->getRank(),
         ]);
