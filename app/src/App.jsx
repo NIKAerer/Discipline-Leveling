@@ -16,7 +16,7 @@ function App() {
   // au lieu de laisser l'utilisateur sur une page vide.
   useEffect(() => {
     setUnauthorizedHandler(() => {
-      navigate('/', { state: { message: 'Your session has expired. Please log in again.' } })
+      navigate('/', { state: { message: 'Ta session a expiré. Reconnecte-toi.' } })
     })
   }, [navigate])
 

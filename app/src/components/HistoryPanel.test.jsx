@@ -24,6 +24,6 @@ describe('HistoryPanel', () => {
         render(<HistoryPanel history={history} />)
 
         expect(screen.getAllByRole('listitem')).toHaveLength(2)
-        expect(screen.getByLabelText('9 Oct: 35 XP (2 quests)')).toHaveClass('level-2')
+        expect(screen.getByLabelText('9 oct. : 35 XP (2 quêtes)')).toHaveClass('level-2')
     })
 })

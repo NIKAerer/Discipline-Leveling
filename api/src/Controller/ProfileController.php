@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Command\SeedCommand;
 use App\Http\JsonBody;
 use App\Service\AccountDeleter;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
@@ -29,6 +30,10 @@ class ProfileController
     #[Route('/api/profile', name: 'api_profile_update', methods: ['PATCH'])]
     public function update(Request $request, EntityManagerInterface $em, #[CurrentUser] User $user): JsonResponse
     {
+        if ($user->getEmail() === SeedCommand::DEMO_EMAIL) {
+            return new JsonResponse(['error' => 'Le compte de démo ne peut pas être modifié'], 403);
+        }
+
         $data = JsonBody::decode($request);
         $emailChanged = false;
 
@@ -72,6 +77,10 @@ class ProfileController
     #[Route('/api/profile', name: 'api_profile_delete', methods: ['DELETE'])]
     public function delete(AccountDeleter $accountDeleter, #[CurrentUser] User $user): JsonResponse
     {
+        if ($user->getEmail() === SeedCommand::DEMO_EMAIL) {
+            return new JsonResponse(['error' => 'Le compte de démo ne peut pas être supprimé'], 403);
+        }
+
         $accountDeleter->delete($user);
 
         return new JsonResponse(['message' => 'Account deleted']);

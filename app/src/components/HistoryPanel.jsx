@@ -8,15 +8,15 @@ function HistoryPanel({ history }) {
             <div className="streak-stats">
                 <div>
                     <span className="streak-value">{history.currentStreak}</span>
-                    <span className="streak-label">day streak</span>
+                    <span className="streak-label">jours d'affilée</span>
                 </div>
                 <div>
                     <span className="streak-value muted">{history.bestStreak}</span>
-                    <span className="streak-label">best streak</span>
+                    <span className="streak-label">record</span>
                 </div>
             </div>
             <div className="history-heatmap">
-                <span className="streak-label">Last 30 days</span>
+                <span className="streak-label">30 derniers jours</span>
                 <ActivityHeatmap days={history.days} />
             </div>
         </div>

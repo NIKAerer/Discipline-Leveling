@@ -7,7 +7,7 @@ function LpChart({ matches, lpGoal }) {
     if (matches.length < 2) {
         return (
             <p className="activity-empty" style={{ padding: '32px 22px' }}>
-                Log at least 2 games to see your LP progression graph.
+                Enregistre au moins 2 games pour voir ta courbe de LP.
             </p>
         )
     }
@@ -135,7 +135,7 @@ function LolTracker() {
             || form.assists === '' || Number.isNaN(assists)
             || form.lpChange === '' || Number.isNaN(lpChange)
         ) {
-            setFormError('Champion, KDA and LP change are required')
+            setFormError('Champion, KDA et variation de LP obligatoires')
             return
         }
 
@@ -157,14 +157,14 @@ function LolTracker() {
             })
 
             if (!response.ok) {
-                setFormError(await extractErrorMessage(response, 'Could not save this match'))
+                setFormError(await extractErrorMessage(response, 'Impossible d\'enregistrer cette game'))
                 return
             }
 
             setForm(emptyForm)
             await refreshOverview()
         } catch {
-            setFormError('Unable to reach the server. Please try again later.')
+            setFormError('Impossible de joindre le serveur. Réessaie plus tard.')
         }
     }
 
@@ -204,7 +204,7 @@ function LolTracker() {
         return (
             <div className="page">
                 <NavBar />
-                <p style={{ padding: '48px' }}>Loading...</p>
+                <p style={{ padding: '48px' }}>Chargement…</p>
             </div>
         )
     }
@@ -215,8 +215,8 @@ function LolTracker() {
                 <NavBar />
                 <div className="container" style={{ paddingTop: '40px' }}>
                     <p className="activity-empty">
-                        You are not tracking the LoL discipline yet. Add it from your{' '}
-                        <Link to="/profile">profile</Link> first.
+                        Tu ne suis pas encore la discipline LoL. Ajoute-la depuis ton{' '}
+                        <Link to="/profile">profil</Link>.
                     </p>
                 </div>
             </div>
@@ -234,15 +234,15 @@ function LolTracker() {
             <NavBar />
             <div className="container" style={{ paddingTop: '40px', paddingBottom: '40px', maxWidth: '760px' }}>
                 <Link to="/dashboard" className="btn-link" style={{ marginBottom: '20px', display: 'inline-block' }}>
-                    &larr; Back to dashboard
+                    &larr; Retour au tableau de bord
                 </Link>
 
                 <div className="panel" style={{ padding: '32px', marginBottom: '32px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
-                        <h1 style={{ fontSize: '22px' }}>LoL Tracker</h1>
+                        <h1 style={{ fontSize: '22px' }}>Tracker LoL</h1>
                         <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                            {overview.currentLp !== null ? `${overview.currentLp} LP` : 'No data yet'}
-                            {overview.lpGoal ? ` / ${overview.lpGoal} LP goal` : ''}
+                            {overview.currentLp !== null ? `${overview.currentLp} LP` : 'Pas encore de données'}
+                            {overview.lpGoal ? ` / objectif ${overview.lpGoal} LP` : ''}
                         </span>
                     </div>
 
@@ -254,47 +254,47 @@ function LolTracker() {
 
                     <form onSubmit={saveSettings} style={{ display: 'flex', gap: '10px', alignItems: 'flex-end', marginBottom: '20px', flexWrap: 'wrap' }}>
                         <div style={{ flex: 1, minWidth: '140px' }}>
-                            <label>Starting LP</label>
+                            <label>LP de départ</label>
                             <input
                                 className="field"
                                 type="number"
-                                placeholder="Your LP right now"
+                                placeholder="Tes LP actuels"
                                 value={startingInput}
                                 onChange={(e) => setStartingInput(e.target.value)}
                             />
                         </div>
                         <div style={{ flex: 1, minWidth: '140px' }}>
-                            <label>LP goal</label>
+                            <label>Objectif de LP</label>
                             <input
                                 className="field"
                                 type="number"
-                                placeholder="e.g. 1000"
+                                placeholder="ex : 1000"
                                 value={goalInput}
                                 onChange={(e) => setGoalInput(e.target.value)}
                             />
                         </div>
-                        <button type="submit" className="btn-ghost">Save</button>
+                        <button type="submit" className="btn-ghost">Enregistrer</button>
                     </form>
-                    {settingsSaved && <p className="msg-success">Settings saved!</p>}
+                    {settingsSaved && <p className="msg-success">Réglages enregistrés !</p>}
 
-                    <h2 className="section-title" style={{ marginTop: '12px' }}>LP progression</h2>
+                    <h2 className="section-title" style={{ marginTop: '12px' }}>Progression des LP</h2>
                     <div className="panel" style={{ padding: '12px' }}>
                         <LpChart matches={overview.matches} lpGoal={overview.lpGoal} />
                     </div>
                 </div>
 
                 <div style={{ marginBottom: '32px' }}>
-                    <h2 className="section-title">Winrate by champion</h2>
+                    <h2 className="section-title">Winrate par champion</h2>
                     <div className="panel">
                         {overview.winrateByChampion.length === 0 && (
-                            <p className="activity-empty">No games logged yet.</p>
+                            <p className="activity-empty">Aucune game enregistrée.</p>
                         )}
                         {overview.winrateByChampion.map((c) => (
                             <div key={c.champion} className="activity-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '6px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                     <span>{c.champion}</span>
                                     <span style={{ color: 'var(--text-muted)' }}>
-                                        {c.wins}W {c.losses}L &middot; {c.winratePercent}%
+                                        {c.wins}V {c.losses}D &middot; {c.winratePercent}%
                                     </span>
                                 </div>
                                 <div className="progress-track">
@@ -306,7 +306,7 @@ function LolTracker() {
                 </div>
 
                 <div style={{ marginBottom: '32px' }}>
-                    <h2 className="section-title">Log a game</h2>
+                    <h2 className="section-title">Ajouter une game</h2>
                     <div className="quest-add-panel">
                         <form className="custom-quest-form" onSubmit={submitMatch} style={{ flexWrap: 'wrap' }}>
                             <div>
@@ -314,7 +314,7 @@ function LolTracker() {
                                 <input className="field" type="text" value={form.champion} onChange={(e) => updateField('champion', e.target.value)} />
                             </div>
                             <div>
-                                <label>Lane</label>
+                                <label>Rôle</label>
                                 <input className="field" type="text" value={form.role} onChange={(e) => updateField('role', e.target.value)} />
                             </div>
                             <div>
@@ -322,10 +322,10 @@ function LolTracker() {
                                 <input className="field" type="text" value={form.matchup} onChange={(e) => updateField('matchup', e.target.value)} />
                             </div>
                             <div>
-                                <label>Result</label>
+                                <label>Résultat</label>
                                 <select className="field" value={form.result} onChange={(e) => updateField('result', e.target.value)}>
-                                    <option value="win">Victory</option>
-                                    <option value="loss">Defeat</option>
+                                    <option value="win">Victoire</option>
+                                    <option value="loss">Défaite</option>
                                 </select>
                             </div>
                             <div>
@@ -333,7 +333,7 @@ function LolTracker() {
                                 <input className="field xp-input" type="number" value={form.kills} onChange={(e) => updateField('kills', e.target.value)} />
                             </div>
                             <div>
-                                <label>Deaths</label>
+                                <label>Morts</label>
                                 <input className="field xp-input" type="number" value={form.deaths} onChange={(e) => updateField('deaths', e.target.value)} />
                             </div>
                             <div>
@@ -341,7 +341,7 @@ function LolTracker() {
                                 <input className="field xp-input" type="number" value={form.assists} onChange={(e) => updateField('assists', e.target.value)} />
                             </div>
                             <div>
-                                <label>Duration (min)</label>
+                                <label>Durée (min)</label>
                                 <input className="field xp-input" type="number" value={form.gameDurationMinutes} onChange={(e) => updateField('gameDurationMinutes', e.target.value)} />
                             </div>
                             <div>
@@ -349,27 +349,27 @@ function LolTracker() {
                                 <input className="field xp-input" type="number" value={form.cs} onChange={(e) => updateField('cs', e.target.value)} />
                             </div>
                             <div>
-                                <label>LP change</label>
-                                <input className="field xp-input" type="number" placeholder="+18 or -15" value={form.lpChange} onChange={(e) => updateField('lpChange', e.target.value)} />
+                                <label>Variation de LP</label>
+                                <input className="field xp-input" type="number" placeholder="+18 ou -15" value={form.lpChange} onChange={(e) => updateField('lpChange', e.target.value)} />
                             </div>
-                            <button type="submit" className="btn-primary">Add</button>
+                            <button type="submit" className="btn-primary">Ajouter</button>
                         </form>
                         {formError && <p className="msg-error">{formError}</p>}
                     </div>
                 </div>
 
                 <div>
-                    <h2 className="section-title">Match history</h2>
+                    <h2 className="section-title">Historique des games</h2>
                     <div className="panel quest-list">
                         {sortedMatches.length === 0 && (
-                            <p className="activity-empty">No games logged yet.</p>
+                            <p className="activity-empty">Aucune game enregistrée.</p>
                         )}
                         {sortedMatches.map((m) => (
                             <div key={m.id} className="activity-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '4px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                     <span>
                                         <strong style={{ color: m.win ? 'var(--accent)' : 'var(--danger)' }}>
-                                            {m.win ? 'Victory' : 'Defeat'}
+                                            {m.win ? 'Victoire' : 'Défaite'}
                                         </strong>{' '}
                                         &middot; {m.champion}{m.role ? ` (${m.role})` : ''}{m.matchup ? ` vs ${m.matchup}` : ''}
                                     </span>
@@ -378,7 +378,7 @@ function LolTracker() {
                                             {m.lpChange >= 0 ? '+' : ''}{m.lpChange} LP
                                         </span>
                                         <button type="button" className="btn-link" onClick={() => deleteMatch(m.id)}>
-                                            Remove
+                                            Supprimer
                                         </button>
                                     </span>
                                 </div>

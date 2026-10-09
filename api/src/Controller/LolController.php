@@ -36,7 +36,7 @@ class LolController
         $tracking = $this->getLolTracking($user, $disciplineRepository, $disciplineTrackingRepository);
 
         if (!$tracking) {
-            return new JsonResponse(['error' => 'You are not tracking the LoL discipline yet'], 404);
+            return new JsonResponse(['error' => 'Tu ne suis pas encore la discipline LoL'], 404);
         }
 
         $matches = $lolMatchRepository->findBy(['disciplineTracking' => $tracking], ['playedAt' => 'ASC', 'id' => 'ASC']);
@@ -122,7 +122,7 @@ class LolController
         $tracking = $this->getLolTracking($user, $disciplineRepository, $disciplineTrackingRepository);
 
         if (!$tracking) {
-            return new JsonResponse(['error' => 'You are not tracking the LoL discipline yet'], 404);
+            return new JsonResponse(['error' => 'Tu ne suis pas encore la discipline LoL'], 404);
         }
 
         $data = JsonBody::decode($request);
@@ -145,15 +145,15 @@ class LolController
             || !is_numeric($assists)
             || !is_numeric($lpChange)
         ) {
-            return new JsonResponse(['error' => 'Champion, result, KDA and LP change are required'], 400);
+            return new JsonResponse(['error' => 'Champion, résultat, KDA et variation de LP obligatoires'], 400);
         }
 
         if ($gameDurationMinutes !== null && !is_numeric($gameDurationMinutes)) {
-            return new JsonResponse(['error' => 'Game duration must be a number'], 400);
+            return new JsonResponse(['error' => 'La durée doit être un nombre'], 400);
         }
 
         if ($cs !== null && !is_numeric($cs)) {
-            return new JsonResponse(['error' => 'CS must be a number'], 400);
+            return new JsonResponse(['error' => 'Le CS doit être un nombre'], 400);
         }
 
         $match = new LolMatch();
@@ -195,7 +195,7 @@ class LolController
         $match = $lolMatchRepository->find($matchId);
 
         if (!$match || $match->getDisciplineTracking()->getUser() !== $user) {
-            return new JsonResponse(['error' => 'Match not found'], 404);
+            return new JsonResponse(['error' => 'Game introuvable'], 404);
         }
 
         $em->remove($match);
@@ -210,20 +210,20 @@ class LolController
         $tracking = $this->getLolTracking($user, $disciplineRepository, $disciplineTrackingRepository);
 
         if (!$tracking) {
-            return new JsonResponse(['error' => 'You are not tracking the LoL discipline yet'], 404);
+            return new JsonResponse(['error' => 'Tu ne suis pas encore la discipline LoL'], 404);
         }
 
         $data = JsonBody::decode($request);
 
         if (!array_key_exists('lpGoal', $data) && !array_key_exists('lpStarting', $data)) {
-            return new JsonResponse(['error' => 'lpGoal or lpStarting is required'], 400);
+            return new JsonResponse(['error' => 'Indique un objectif ou des LP de départ'], 400);
         }
 
         if (array_key_exists('lpGoal', $data)) {
             $lpGoal = $data['lpGoal'];
 
             if ($lpGoal !== null && !is_numeric($lpGoal)) {
-                return new JsonResponse(['error' => 'lpGoal must be a number or null'], 400);
+                return new JsonResponse(['error' => 'L\'objectif de LP doit être un nombre'], 400);
             }
 
             $tracking->setLpGoal($lpGoal !== null ? (int) $lpGoal : null);
@@ -233,7 +233,7 @@ class LolController
             $lpStarting = $data['lpStarting'];
 
             if ($lpStarting !== null && !is_numeric($lpStarting)) {
-                return new JsonResponse(['error' => 'lpStarting must be a number or null'], 400);
+                return new JsonResponse(['error' => 'Les LP de départ doivent être un nombre'], 400);
             }
 
             $tracking->setLpStarting($lpStarting !== null ? (int) $lpStarting : null);

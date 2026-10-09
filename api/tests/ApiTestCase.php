@@ -38,6 +38,11 @@ abstract class ApiTestCase extends WebTestCase
         return $email;
     }
 
+    protected function useToken(string $token): void
+    {
+        $this->token = $token;
+    }
+
     protected function requestJson(string $method, string $uri, ?array $data = null, ?string $rawBody = null): void
     {
         $server = ['CONTENT_TYPE' => 'application/json'];
