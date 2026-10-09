@@ -25,7 +25,7 @@ class QuestController
         $tracking = $disciplineTrackingRepository->findOneBy(['user' => $user, 'discipline' => $disciplineId]);
 
         if (!$tracking) {
-            return new JsonResponse(['error' => 'Not tracked'], 404);
+            return new JsonResponse(['error' => 'Discipline non suivie'], 404);
         }
 
         $today = new \DateTimeImmutable('today');
@@ -51,7 +51,7 @@ class QuestController
         $tracking = $disciplineTrackingRepository->findOneBy(['user' => $user, 'discipline' => $disciplineId]);
 
         if (!$tracking) {
-            return new JsonResponse(['error' => 'Not tracked'], 404);
+            return new JsonResponse(['error' => 'Discipline non suivie'], 404);
         }
 
         $data = JsonBody::decode($request);
@@ -59,11 +59,11 @@ class QuestController
         $expValue = $data['expValue'] ?? null;
 
         if ($label === '' || !is_numeric($expValue) || (int) $expValue === 0) {
-            return new JsonResponse(['error' => 'A label and a non-zero XP value are required'], 400);
+            return new JsonResponse(['error' => 'Un intitulé et une XP non nulle sont obligatoires'], 400);
         }
 
         if (mb_strlen($label) > 255 || abs((int) $expValue) > 1000) {
-            return new JsonResponse(['error' => 'Label must be 255 characters or less and XP between -1000 and 1000'], 400);
+            return new JsonResponse(['error' => 'L\'intitulé doit faire 255 caractères maximum et l\'XP être entre -1000 et 1000'], 400);
         }
 
         $quest = new Quest();
@@ -88,7 +88,7 @@ class QuestController
         $quest = $questRepository->find($questId);
 
         if (!$quest || $quest->getDisciplineTracking()->getUser() !== $user) {
-            return new JsonResponse(['error' => 'Quest not found'], 404);
+            return new JsonResponse(['error' => 'Quête introuvable'], 404);
         }
 
         $em->remove($quest);
@@ -103,13 +103,13 @@ class QuestController
         $quest = $questRepository->find($questId);
 
         if (!$quest || $quest->getDisciplineTracking()->getUser() !== $user) {
-            return new JsonResponse(['error' => 'Quest not found'], 404);
+            return new JsonResponse(['error' => 'Quête introuvable'], 404);
         }
 
         $today = new \DateTimeImmutable('today');
 
         if ($activityRepository->findOneBy(['quest' => $quest, 'date' => $today])) {
-            return new JsonResponse(['error' => 'Already validated today'], 409);
+            return new JsonResponse(['error' => 'Quête déjà validée aujourd\'hui'], 409);
         }
 
         $activity = new Activity();
@@ -131,6 +131,7 @@ class QuestController
             'validatedToday' => true,
             'disciplineExp' => $tracking->getExp(),
             'disciplineRank' => $tracking->getRank(),
+            'disciplineProgressPercent' => $rankCalculator->progressPercent($tracking->getExp()),
             'expTotal' => $user->getExpTotal(),
             'rank' => $user->getRank(),
         ]);
@@ -142,14 +143,14 @@ class QuestController
         $quest = $questRepository->find($questId);
 
         if (!$quest || $quest->getDisciplineTracking()->getUser() !== $user) {
-            return new JsonResponse(['error' => 'Quest not found'], 404);
+            return new JsonResponse(['error' => 'Quête introuvable'], 404);
         }
 
         $today = new \DateTimeImmutable('today');
         $activity = $activityRepository->findOneBy(['quest' => $quest, 'date' => $today]);
 
         if (!$activity) {
-            return new JsonResponse(['error' => 'Not validated today'], 409);
+            return new JsonResponse(['error' => 'Quête pas encore validée aujourd\'hui'], 409);
         }
 
         $em->remove($activity);
@@ -167,6 +168,7 @@ class QuestController
             'validatedToday' => false,
             'disciplineExp' => $tracking->getExp(),
             'disciplineRank' => $tracking->getRank(),
+            'disciplineProgressPercent' => $rankCalculator->progressPercent($tracking->getExp()),
             'expTotal' => $user->getExpTotal(),
             'rank' => $user->getRank(),
         ]);
@@ -195,13 +197,13 @@ class QuestController
         $tracking = $disciplineTrackingRepository->findOneBy(['user' => $user, 'discipline' => $disciplineId]);
 
         if (!$tracking) {
-            return new JsonResponse(['error' => 'Not tracked'], 404);
+            return new JsonResponse(['error' => 'Discipline non suivie'], 404);
         }
 
         $template = $questTemplateRepository->find($templateId);
 
         if (!$template) {
-            return new JsonResponse(['error' => 'Template not found'], 404);
+            return new JsonResponse(['error' => 'Modèle de quête introuvable'], 404);
         }
 
         $quest = new Quest();

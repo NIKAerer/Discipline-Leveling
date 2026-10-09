@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { extractErrorMessage } from '../utils/api'
+import { apiFetch, extractErrorMessage } from '../utils/api'
 import avatar1 from '../assets/avatars/avatar-1.svg'
 import avatar2 from '../assets/avatars/avatar-2.svg'
 import avatar3 from '../assets/avatars/avatar-3.svg'
 import avatar4 from '../assets/avatars/avatar-4.svg'
+import DisciplineIcon from '../components/DisciplineIcon'
 
 const AVATARS = [
-    { id: 'avatar-1', src: avatar1, label: 'Hunter' },
+    { id: 'avatar-1', src: avatar1, label: 'Chasseur' },
     { id: 'avatar-2', src: avatar2, label: 'Mage' },
-    { id: 'avatar-3', src: avatar3, label: 'Warrior' },
-    { id: 'avatar-4', src: avatar4, label: 'Shadow' },
+    { id: 'avatar-3', src: avatar3, label: 'Guerrier' },
+    { id: 'avatar-4', src: avatar4, label: 'Ombre' },
 ]
 
 function CreateCharacter() {
@@ -21,14 +22,13 @@ function CreateCharacter() {
     const navigate = useNavigate()
 
     useEffect(() => {
-        fetch('http://localhost:8000/api/disciplines')
+        apiFetch('/api/disciplines')
             .then((response) => response.json())
             .then((data) => setDisciplines(data))
     }, [])
 
     useEffect(() => {
-        const token = localStorage.getItem('token')
-        fetch('http://localhost:8000/api/character', { headers: { 'Authorization': `Bearer ${token}` } })
+        apiFetch('/api/character')
             .then((response) => response.json())
             .then((data) => {
                 const alreadyTrackedIds = data.map((tracking) => tracking.disciplineId)
@@ -42,35 +42,33 @@ function CreateCharacter() {
 
     async function handleSubmit(e) {
         e.preventDefault()
-        if (!selectedAvatar) { setError('Choose an avatar'); return }
-        const token = localStorage.getItem('token')
+        if (!selectedAvatar) { setError('Choisis un avatar'); return }
         const payload = selectedDisciplines.map((disciplineId) => ({ disciplineId, goal: '' }))
         try {
-            const response = await fetch('http://localhost:8000/api/character', {
+            const response = await apiFetch('/api/character', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ avatar: selectedAvatar, disciplines: payload }),
             })
             if (!response.ok) {
-                setError(await extractErrorMessage(response, 'An error occurred while creating your character'))
+                setError(await extractErrorMessage(response, 'Impossible de créer ton personnage'))
                 return
             }
             navigate('/dashboard')
-        } catch { setError('Server error — is the API running on localhost:8000?') }
+        } catch { setError('Impossible de joindre le serveur. Réessaie plus tard.') }
     }
 
     return (
         <div className="center-page">
             <div className="panel character-panel">
-                <div className="badge-tag" style={{ marginBottom: '18px' }}>Step 1 / 1</div>
-                <h1 style={{ fontSize: '24px', marginBottom: '8px' }}>Create your character</h1>
+                <div className="badge-tag" style={{ marginBottom: '18px' }}>Dernière étape</div>
+                <h1 style={{ fontSize: '24px', marginBottom: '8px' }}>Crée ton personnage</h1>
                 <p style={{ fontSize: '14px', color: 'var(--text-muted)', margin: '0 0 28px' }}>
-                    You start at rank E. Choose the disciplines you want to grow — you can add more later.
+                    Tu commences au rang E. Choisis les disciplines à faire progresser, tu pourras en ajouter plus tard.
                 </p>
 
                 <form onSubmit={handleSubmit}>
                     <div style={{ marginBottom: '28px' }}>
-                        <label>Choose your avatar</label>
+                        <label>Choisis ton avatar</label>
                         <div style={{ display: 'flex', gap: '12px' }}>
                             {AVATARS.map((avatar) => (
                                 <img
@@ -86,7 +84,7 @@ function CreateCharacter() {
                         </div>
                     </div>
 
-                    <label style={{ marginBottom: '12px' }}>Starting disciplines</label>
+                    <label style={{ marginBottom: '12px' }}>Disciplines de départ</label>
                     <div className="discipline-grid" style={{ marginBottom: '32px' }}>
                         {disciplines.map((discipline) => {
                             const selected = selectedDisciplines.includes(discipline.id)
@@ -96,7 +94,7 @@ function CreateCharacter() {
                                     className={`disc-card ${selected ? 'selected' : ''}`}
                                     onClick={() => toggleDiscipline(discipline.id)}
                                 >
-                                    <span className="disc-dot" />
+                                    <DisciplineIcon icon={discipline.icon} />
                                     <span>{discipline.name}</span>
                                 </div>
                             )
@@ -106,7 +104,7 @@ function CreateCharacter() {
                     {error && <p className="msg-error" style={{ marginBottom: '16px' }}>{error}</p>}
 
                     <button type="submit" className="btn-primary" style={{ width: '100%' }}>
-                        Enter the system &rarr;
+                        Entrer dans le système &rarr;
                     </button>
                 </form>
             </div>

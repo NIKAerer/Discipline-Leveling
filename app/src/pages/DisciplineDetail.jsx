@@ -1,35 +1,47 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import NavBar from '../components/NavBar'
-import { extractErrorMessage } from '../utils/api'
+import HistoryPanel from '../components/HistoryPanel'
+import { apiFetch, extractErrorMessage } from '../utils/api'
+import DisciplineIcon from '../components/DisciplineIcon'
 
-function QuestSection({ title, danger, items, onToggle, adding, onOpenAdd, onCloseAdd, templates, onAddFromTemplate, newLabel, setNewLabel, newXp, setNewXp, onSubmitCustom, formError }) {
+function QuestSection({ title, danger, items, onToggle, onDelete, adding, onOpenAdd, onCloseAdd, templates, onAddFromTemplate, newLabel, setNewLabel, newXp, setNewXp, onSubmitCustom, formError }) {
     return (
         <div>
             <h2 className={`section-title ${danger ? 'malus-title' : ''}`}>{title}</h2>
             <div className="panel quest-list">
                 {items.length === 0 && (
-                    <p className="activity-empty">Nothing here yet.</p>
+                    <p className="activity-empty">Rien pour l'instant.</p>
                 )}
                 {items.map((item) => (
-                    <button
-                        type="button"
-                        key={item.id}
-                        className={`quest-row ${danger ? 'malus' : ''} ${item.validatedToday ? 'done' : ''}`}
-                        onClick={() => onToggle(item)}
-                    >
-                        <span className="quest-checkbox">
-                            {item.validatedToday && (
-                                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke={danger ? 'var(--bg)' : 'var(--accent-dark)'} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M5 13l4 4L19 7" />
-                                </svg>
-                            )}
-                        </span>
-                        <span className="quest-label">{item.label}</span>
-                        <span className="quest-xp" style={{ color: danger ? 'var(--danger)' : 'var(--accent)' }}>
-                            {item.expValue > 0 ? '+' : ''}{item.expValue} XP
-                        </span>
-                    </button>
+                    <div className="quest-item" key={item.id}>
+                        <button
+                            type="button"
+                            className={`quest-row ${danger ? 'malus' : ''} ${item.validatedToday ? 'done' : ''}`}
+                            onClick={() => onToggle(item)}
+                        >
+                            <span className="quest-checkbox">
+                                {item.validatedToday && (
+                                    <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke={danger ? 'var(--bg)' : 'var(--accent-dark)'} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M5 13l4 4L19 7" />
+                                    </svg>
+                                )}
+                            </span>
+                            <span className="quest-label">{item.label}</span>
+                            <span className="quest-xp" style={{ color: danger ? 'var(--danger)' : 'var(--accent)' }}>
+                                {item.expValue > 0 ? '+' : ''}{item.expValue} XP
+                            </span>
+                        </button>
+                        <button
+                            type="button"
+                            className="quest-delete"
+                            aria-label={`Supprimer « ${item.label} »`}
+                            title="Supprimer"
+                            onClick={() => onDelete(item)}
+                        >
+                            &times;
+                        </button>
+                    </div>
                 ))}
             </div>
 
@@ -55,11 +67,11 @@ function QuestSection({ title, danger, items, onToggle, adding, onOpenAdd, onClo
 
                     <form className="custom-quest-form" onSubmit={onSubmitCustom}>
                         <div>
-                            <label>Custom {danger ? 'malus' : 'quest'}</label>
+                            <label>{danger ? 'Malus personnalisé' : 'Quête personnalisée'}</label>
                             <input
                                 className="field"
                                 type="text"
-                                placeholder="Label"
+                                placeholder="Intitulé"
                                 value={newLabel}
                                 onChange={(e) => setNewLabel(e.target.value)}
                             />
@@ -74,15 +86,15 @@ function QuestSection({ title, danger, items, onToggle, adding, onOpenAdd, onClo
                                 onChange={(e) => setNewXp(e.target.value)}
                             />
                         </div>
-                        <button type="submit" className="btn-primary">Add</button>
-                        <button type="button" className="btn-ghost" onClick={onCloseAdd}>Cancel</button>
+                        <button type="submit" className="btn-primary">Ajouter</button>
+                        <button type="button" className="btn-ghost" onClick={onCloseAdd}>Annuler</button>
                     </form>
 
                     {formError && <p className="msg-error">{formError}</p>}
                 </div>
             ) : (
                 <button type="button" className="add-quest-btn" onClick={onOpenAdd}>
-                    + Add a {danger ? 'malus' : 'quest'}
+                    + Ajouter {danger ? 'un malus' : 'une quête'}
                 </button>
             )}
         </div>
@@ -104,46 +116,45 @@ function DisciplineDetail() {
     const [newLabel, setNewLabel] = useState('')
     const [newXp, setNewXp] = useState('10')
     const [formError, setFormError] = useState('')
+    const [history, setHistory] = useState(null)
 
-    const token = localStorage.getItem('token')
+    const loadHistory = useCallback(() => {
+        apiFetch(`/api/history?disciplineId=${id}`)
+            .then((response) => (response.ok ? response.json() : null))
+            .then((data) => setHistory(data))
+    }, [id])
 
     useEffect(() => {
-        fetch(`http://localhost:8000/api/character/${id}`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-        })
+        apiFetch(`/api/character/${id}`)
             .then((response) => response.json())
             .then((data) => {
                 setDiscipline(data)
                 setGoal(data.goal || '')
             })
 
-        fetch(`http://localhost:8000/api/character/${id}/quests`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-        })
+        apiFetch(`/api/character/${id}/quests`)
             .then((response) => response.json())
             .then((data) => setQuests(data))
 
-        fetch(`http://localhost:8000/api/disciplines/${id}/quest-templates`)
+        apiFetch(`/api/disciplines/${id}/quest-templates`)
             .then((response) => response.json())
             .then((data) => setTemplates(data))
-    }, [id, token])
+
+        loadHistory()
+    }, [id, loadHistory])
 
     async function handleSave(e) {
         e.preventDefault()
         setSaved(false)
         setError('')
 
-        const response = await fetch(`http://localhost:8000/api/character/${id}`, {
+        const response = await apiFetch(`/api/character/${id}`, {
             method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
             body: JSON.stringify({ goal }),
         })
 
         if (!response.ok) {
-            setError('Could not save your goal')
+            setError('Impossible d\'enregistrer ton objectif')
             return
         }
 
@@ -154,9 +165,8 @@ function DisciplineDetail() {
         const method = quest.validatedToday ? 'DELETE' : 'POST'
 
         try {
-            const response = await fetch(`http://localhost:8000/api/quests/${quest.id}/validate`, {
+            const response = await apiFetch(`/api/quests/${quest.id}/validate`, {
                 method,
-                headers: { 'Authorization': `Bearer ${token}` },
             })
 
             if (!response.ok) {
@@ -172,9 +182,23 @@ function DisciplineDetail() {
                 ...prev,
                 exp: data.disciplineExp,
                 rank: data.disciplineRank,
+                progressPercent: data.disciplineProgressPercent,
             }))
+            loadHistory()
         } catch {
             // Silent — the checkbox just won't move, which is enough signal here.
+        }
+    }
+
+    async function deleteQuest(quest) {
+        if (!window.confirm(`Supprimer la quête « ${quest.label} » ? L'XP déjà gagnée est conservée.`)) {
+            return
+        }
+
+        const response = await apiFetch(`/api/quests/${quest.id}`, { method: 'DELETE' })
+
+        if (response.ok) {
+            setQuests((prev) => prev.filter((item) => item.id !== quest.id))
         }
     }
 
@@ -194,13 +218,12 @@ function DisciplineDetail() {
         setFormError('')
 
         try {
-            const response = await fetch(`http://localhost:8000/api/character/${id}/quests/from-template/${template.id}`, {
+            const response = await apiFetch(`/api/character/${id}/quests/from-template/${template.id}`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
             })
 
             if (!response.ok) {
-                setFormError(await extractErrorMessage(response, 'Could not add this quest'))
+                setFormError(await extractErrorMessage(response, 'Impossible d\'ajouter cette quête'))
                 return
             }
 
@@ -208,7 +231,7 @@ function DisciplineDetail() {
             setQuests((prev) => [...prev, created])
             closeAdd()
         } catch {
-            setFormError('Server error — is the API running on localhost:8000?')
+            setFormError('Impossible de joindre le serveur. Réessaie plus tard.')
         }
     }
 
@@ -227,14 +250,13 @@ function DisciplineDetail() {
         const expValue = addingType === 'malus' ? -magnitude : magnitude
 
         try {
-            const response = await fetch(`http://localhost:8000/api/character/${id}/quests`, {
+            const response = await apiFetch(`/api/character/${id}/quests`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ label, expValue }),
             })
 
             if (!response.ok) {
-                setFormError(await extractErrorMessage(response, 'Could not add this quest'))
+                setFormError(await extractErrorMessage(response, 'Impossible d\'ajouter cette quête'))
                 return
             }
 
@@ -242,7 +264,7 @@ function DisciplineDetail() {
             setQuests((prev) => [...prev, created])
             closeAdd()
         } catch {
-            setFormError('Server error — is the API running on localhost:8000?')
+            setFormError('Impossible de joindre le serveur. Réessaie plus tard.')
         }
     }
 
@@ -250,7 +272,7 @@ function DisciplineDetail() {
         return (
             <div className="page">
                 <NavBar />
-                <p style={{ padding: '48px' }}>Loading...</p>
+                <p style={{ padding: '48px' }}>Chargement…</p>
             </div>
         )
     }
@@ -265,17 +287,17 @@ function DisciplineDetail() {
             <NavBar />
             <div className="container" style={{ paddingTop: '40px', paddingBottom: '40px', maxWidth: '640px' }}>
                 <button type="button" className="btn-link" style={{ marginBottom: '20px' }} onClick={() => navigate('/dashboard')}>
-                    &larr; Back to dashboard
+                    &larr; Retour au tableau de bord
                 </button>
 
                 <div className="panel" style={{ padding: '32px', marginBottom: '32px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
                         <div className="discipline-card-head" style={{ marginBottom: 0 }}>
-                            <span className="disc-dot" />
+                            <DisciplineIcon icon={discipline.icon} />
                             <h1 style={{ fontSize: '22px' }}>{discipline.name}</h1>
                         </div>
                         <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                            Rank {discipline.rank} &middot; {discipline.progressPercent}%
+                            Rang {discipline.rank} &middot; {discipline.progressPercent}%
                         </span>
                     </div>
                     <div className="progress-track" style={{ marginBottom: '24px' }}>
@@ -284,13 +306,13 @@ function DisciplineDetail() {
 
                     {discipline.name === 'LoL' && (
                         <Link to="/lol" className="btn-ghost" style={{ marginBottom: '24px', display: 'inline-block' }}>
-                            Open LoL Tracker &rarr;
+                            Ouvrir le tracker LoL &rarr;
                         </Link>
                     )}
 
                     <form onSubmit={handleSave}>
                         <div style={{ marginBottom: '20px' }}>
-                            <label>Goal</label>
+                            <label>Objectif</label>
                             <input
                                 className="field"
                                 type="text"
@@ -298,19 +320,22 @@ function DisciplineDetail() {
                                 onChange={(e) => setGoal(e.target.value)}
                             />
                         </div>
-                        <button type="submit" className="btn-primary">Save</button>
+                        <button type="submit" className="btn-primary">Enregistrer</button>
                     </form>
 
                     {error && <p className="msg-error" style={{ marginTop: '16px' }}>{error}</p>}
-                    {saved && <p className="msg-success" style={{ marginTop: '16px' }}>Saved!</p>}
+                    {saved && <p className="msg-success" style={{ marginTop: '16px' }}>Enregistré !</p>}
                 </div>
+
+                {history && <HistoryPanel history={history} />}
 
                 <div style={{ marginBottom: '32px' }}>
                     <QuestSection
-                        title="Quests"
+                        title="Quêtes"
                         danger={false}
                         items={positiveQuests}
                         onToggle={toggleQuest}
+                        onDelete={deleteQuest}
                         adding={addingType === 'quest'}
                         onOpenAdd={() => openAdd('quest')}
                         onCloseAdd={closeAdd}
@@ -331,6 +356,7 @@ function DisciplineDetail() {
                         danger={true}
                         items={malusItems}
                         onToggle={toggleQuest}
+                        onDelete={deleteQuest}
                         adding={addingType === 'malus'}
                         onOpenAdd={() => openAdd('malus')}
                         onCloseAdd={closeAdd}

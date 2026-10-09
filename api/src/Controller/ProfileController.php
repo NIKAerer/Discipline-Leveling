@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Command\SeedCommand;
 use App\Http\JsonBody;
 use App\Service\AccountDeleter;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
@@ -29,6 +30,10 @@ class ProfileController
     #[Route('/api/profile', name: 'api_profile_update', methods: ['PATCH'])]
     public function update(Request $request, EntityManagerInterface $em, #[CurrentUser] User $user): JsonResponse
     {
+        if ($user->getEmail() === SeedCommand::DEMO_EMAIL) {
+            return new JsonResponse(['error' => 'Le compte de démo ne peut pas être modifié'], 403);
+        }
+
         $data = JsonBody::decode($request);
         $emailChanged = false;
 
@@ -36,7 +41,7 @@ class ProfileController
             $name = JsonBody::string($data, 'name') ?? '';
 
             if ($name === '' || mb_strlen($name) > 50) {
-                return new JsonResponse(['error' => 'Name must be between 1 and 50 characters'], 400);
+                return new JsonResponse(['error' => 'Le pseudo doit faire entre 1 et 50 caractères'], 400);
             }
 
             $user->setName($name);
@@ -46,7 +51,7 @@ class ProfileController
             $email = strtolower(JsonBody::string($data, 'email') ?? '');
 
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                return new JsonResponse(['error' => 'Email is not valid'], 400);
+                return new JsonResponse(['error' => 'Adresse email invalide'], 400);
             }
 
             if ($email !== $user->getEmail()) {
@@ -59,7 +64,7 @@ class ProfileController
         try {
             $em->flush();
         } catch (UniqueConstraintViolationException $e) {
-            return new JsonResponse(['error' => 'This name or email is already taken'], 409);
+            return new JsonResponse(['error' => 'Ce pseudo ou cet email est déjà utilisé'], 409);
         }
 
         return new JsonResponse([
@@ -72,6 +77,10 @@ class ProfileController
     #[Route('/api/profile', name: 'api_profile_delete', methods: ['DELETE'])]
     public function delete(AccountDeleter $accountDeleter, #[CurrentUser] User $user): JsonResponse
     {
+        if ($user->getEmail() === SeedCommand::DEMO_EMAIL) {
+            return new JsonResponse(['error' => 'Le compte de démo ne peut pas être supprimé'], 403);
+        }
+
         $accountDeleter->delete($user);
 
         return new JsonResponse(['message' => 'Account deleted']);

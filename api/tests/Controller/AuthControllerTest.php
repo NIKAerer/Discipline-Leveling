@@ -31,7 +31,7 @@ class AuthControllerTest extends ApiTestCase
         $this->requestJson('POST', '/api/register', ['name' => 'Nika', 'email' => 'pas-un-email', 'password' => 'MotDePasse123!']);
 
         $this->assertResponseStatusCodeSame(400);
-        $this->assertSame('Email is not valid', $this->responseData()['error']);
+        $this->assertSame('Adresse email invalide', $this->responseData()['error']);
     }
 
     public function testRegisterRejectsShortPassword(): void

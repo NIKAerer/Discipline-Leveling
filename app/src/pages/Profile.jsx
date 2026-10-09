@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import NavBar from '../components/NavBar'
-import { extractErrorMessage } from '../utils/api'
+import { apiFetch, extractErrorMessage } from '../utils/api'
+import DisciplineIcon from '../components/DisciplineIcon'
 
 function Profile() {
     const [name, setName] = useState('')
@@ -23,13 +24,12 @@ function Profile() {
     const [loading, setLoading] = useState(true)
 
     const navigate = useNavigate()
-    const token = localStorage.getItem('token')
 
     useEffect(() => {
         Promise.all([
-            fetch('http://localhost:8000/api/profile', { headers: { 'Authorization': `Bearer ${token}` } }).then((r) => r.json()),
-            fetch('http://localhost:8000/api/disciplines').then((r) => r.json()),
-            fetch('http://localhost:8000/api/character', { headers: { 'Authorization': `Bearer ${token}` } }).then((r) => r.json()),
+            apiFetch('/api/profile').then((r) => r.json()),
+            apiFetch('/api/disciplines').then((r) => r.json()),
+            apiFetch('/api/character').then((r) => r.json()),
         ]).then(([profile, disciplines, tracked]) => {
             setName(profile.name)
             setEmail(profile.email)
@@ -39,7 +39,7 @@ function Profile() {
             setTrackedIds(tracked.map((t) => t.disciplineId))
             setLoading(false)
         })
-    }, [token])
+    }, [])
 
     function toggleNewDiscipline(id) {
         setSelectedNewDisciplines((prev) =>
@@ -53,14 +53,13 @@ function Profile() {
         setProfileSuccess('')
 
         try {
-            const response = await fetch('http://localhost:8000/api/profile', {
+            const response = await apiFetch('/api/profile', {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ name, email }),
             })
 
             if (!response.ok) {
-                setProfileError(await extractErrorMessage(response, 'An error occurred while updating your profile'))
+                setProfileError(await extractErrorMessage(response, 'Impossible de mettre à jour ton profil'))
                 return
             }
 
@@ -71,13 +70,13 @@ function Profile() {
                 // resolves to this account, so force a fresh login instead of
                 // letting the next API call fail with a confusing 401.
                 localStorage.removeItem('token')
-                navigate('/', { state: { message: 'Your email was updated. Please log in again.' } })
+                navigate('/', { state: { message: 'Ton email a été modifié. Reconnecte-toi.' } })
                 return
             }
 
-            setProfileSuccess('Profile updated!')
+            setProfileSuccess('Profil mis à jour !')
         } catch {
-            setProfileError('Server error — is the API running on localhost:8000?')
+            setProfileError('Impossible de joindre le serveur. Réessaie plus tard.')
         }
     }
 
@@ -87,29 +86,28 @@ function Profile() {
         setDisciplinesSuccess('')
 
         if (selectedNewDisciplines.length === 0) {
-            setDisciplinesError('Choose at least one discipline')
+            setDisciplinesError('Choisis au moins une discipline')
             return
         }
 
         const payload = selectedNewDisciplines.map((disciplineId) => ({ disciplineId, goal: '' }))
 
         try {
-            const response = await fetch('http://localhost:8000/api/character', {
+            const response = await apiFetch('/api/character', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ disciplines: payload }),
             })
 
             if (!response.ok) {
-                setDisciplinesError(await extractErrorMessage(response, 'An error occurred while adding disciplines'))
+                setDisciplinesError(await extractErrorMessage(response, 'Impossible d\'ajouter ces disciplines'))
                 return
             }
 
             setTrackedIds((prev) => [...prev, ...selectedNewDisciplines])
             setSelectedNewDisciplines([])
-            setDisciplinesSuccess('Disciplines added! Check your dashboard.')
+            setDisciplinesSuccess('Disciplines ajoutées ! Retrouve-les sur ton tableau de bord.')
         } catch {
-            setDisciplinesError('Server error — is the API running on localhost:8000?')
+            setDisciplinesError('Impossible de joindre le serveur. Réessaie plus tard.')
         }
     }
 
@@ -117,20 +115,19 @@ function Profile() {
         setDeleteError('')
 
         try {
-            const response = await fetch('http://localhost:8000/api/profile', {
+            const response = await apiFetch('/api/profile', {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` },
             })
 
             if (!response.ok) {
-                setDeleteError(await extractErrorMessage(response, 'An error occurred while deleting your account'))
+                setDeleteError(await extractErrorMessage(response, 'Impossible de supprimer ton compte'))
                 return
             }
 
             localStorage.removeItem('token')
             navigate('/')
         } catch {
-            setDeleteError('Server error — is the API running on localhost:8000?')
+            setDeleteError('Impossible de joindre le serveur. Réessaie plus tard.')
         }
     }
 
@@ -138,7 +135,7 @@ function Profile() {
         return (
             <div className="page">
                 <NavBar />
-                <p style={{ padding: '48px' }}>Loading...</p>
+                <p style={{ padding: '48px' }}>Chargement…</p>
             </div>
         )
     }
@@ -150,17 +147,17 @@ function Profile() {
             <NavBar />
             <div className="container" style={{ paddingTop: '40px', paddingBottom: '60px', maxWidth: '640px', display: 'flex', flexDirection: 'column', gap: '28px' }}>
                 <div>
-                    <h1 style={{ fontSize: '24px', marginBottom: '4px' }}>Profile</h1>
+                    <h1 style={{ fontSize: '24px', marginBottom: '4px' }}>Profil</h1>
                     <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>
-                        Rank {rank} &middot; {expTotal} XP
+                        Rang {rank} &middot; {expTotal} XP
                     </p>
                 </div>
 
                 <div className="panel" style={{ padding: '32px' }}>
-                    <h2 style={{ fontSize: '16px', marginBottom: '20px' }}>Account details</h2>
+                    <h2 style={{ fontSize: '16px', marginBottom: '20px' }}>Informations du compte</h2>
                     <form onSubmit={handleProfileSubmit} className="form-stack">
                         <div>
-                            <label>Username</label>
+                            <label>Pseudo</label>
                             <input className="field" type="text" value={name} onChange={(e) => setName(e.target.value)} />
                         </div>
                         <div>
@@ -169,18 +166,18 @@ function Profile() {
                         </div>
                         {profileError && <p className="msg-error">{profileError}</p>}
                         {profileSuccess && <p className="msg-success">{profileSuccess}</p>}
-                        <button type="submit" className="btn-primary" style={{ marginTop: '4px' }}>Save changes</button>
+                        <button type="submit" className="btn-primary" style={{ marginTop: '4px' }}>Enregistrer</button>
                     </form>
                 </div>
 
                 <div className="panel" style={{ padding: '32px' }}>
-                    <h2 style={{ fontSize: '16px', marginBottom: '6px' }}>Add disciplines</h2>
+                    <h2 style={{ fontSize: '16px', marginBottom: '6px' }}>Ajouter des disciplines</h2>
                     <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '0 0 20px' }}>
-                        Track a new discipline in addition to the ones you already have.
+                        Suis une nouvelle discipline en plus de celles que tu as déjà.
                     </p>
 
                     {availableDisciplines.length === 0 ? (
-                        <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>You&apos;re already tracking every discipline.</p>
+                        <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Tu suis déjà toutes les disciplines.</p>
                     ) : (
                         <form onSubmit={handleAddDisciplines}>
                             <div className="discipline-grid" style={{ marginBottom: '20px' }}>
@@ -192,7 +189,7 @@ function Profile() {
                                             className={`disc-card ${selected ? 'selected' : ''}`}
                                             onClick={() => toggleNewDiscipline(discipline.id)}
                                         >
-                                            <span className="disc-dot" />
+                                            <DisciplineIcon icon={discipline.icon} />
                                             <span>{discipline.name}</span>
                                         </div>
                                     )
@@ -200,15 +197,15 @@ function Profile() {
                             </div>
                             {disciplinesError && <p className="msg-error" style={{ marginBottom: '16px' }}>{disciplinesError}</p>}
                             {disciplinesSuccess && <p className="msg-success" style={{ marginBottom: '16px' }}>{disciplinesSuccess}</p>}
-                            <button type="submit" className="btn-primary">Add selected</button>
+                            <button type="submit" className="btn-primary">Ajouter la sélection</button>
                         </form>
                     )}
                 </div>
 
                 <div className="panel" style={{ padding: '32px', borderColor: 'var(--danger)' }}>
-                    <h2 style={{ fontSize: '16px', marginBottom: '6px' }}>Danger zone</h2>
+                    <h2 style={{ fontSize: '16px', marginBottom: '6px' }}>Zone de danger</h2>
                     <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '0 0 20px' }}>
-                        Deleting your account permanently removes your character, your disciplines and all your progress. This cannot be undone.
+                        Supprimer ton compte efface définitivement ton personnage, tes disciplines et toute ta progression. Impossible de revenir en arrière.
                     </p>
 
                     {deleteError && <p className="msg-error" style={{ marginBottom: '16px' }}>{deleteError}</p>}
@@ -216,15 +213,15 @@ function Profile() {
                     {confirmDelete ? (
                         <div style={{ display: 'flex', gap: '12px' }}>
                             <button type="button" className="btn-danger" onClick={handleDeleteAccount}>
-                                Yes, delete my account permanently
+                                Oui, supprimer définitivement mon compte
                             </button>
                             <button type="button" className="btn-ghost" onClick={() => setConfirmDelete(false)}>
-                                Cancel
+                                Annuler
                             </button>
                         </div>
                     ) : (
                         <button type="button" className="btn-danger" onClick={() => setConfirmDelete(true)}>
-                            Delete my account
+                            Supprimer mon compte
                         </button>
                     )}
                 </div>

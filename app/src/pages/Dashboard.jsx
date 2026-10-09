@@ -1,23 +1,30 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import NavBar from '../components/NavBar'
+import HistoryPanel from '../components/HistoryPanel'
+import { apiFetch } from '../utils/api'
+import DisciplineIcon from '../components/DisciplineIcon'
 
 function Dashboard() {
     const [dashboard, setDashboard] = useState(null)
+    const [history, setHistory] = useState(null)
     const navigate = useNavigate()
 
     useEffect(() => {
-        const token = localStorage.getItem('token')
-        fetch('http://localhost:8000/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } })
+        apiFetch('/api/dashboard')
             .then((response) => response.json())
             .then((data) => setDashboard(data))
+
+        apiFetch('/api/history')
+            .then((response) => (response.ok ? response.json() : null))
+            .then((data) => setHistory(data))
     }, [])
 
     if (!dashboard) {
         return (
             <div className="page">
                 <NavBar />
-                <p style={{ padding: '48px' }}>Loading...</p>
+                <p style={{ padding: '48px' }}>Chargement…</p>
             </div>
         )
     }
@@ -33,7 +40,7 @@ function Dashboard() {
                     <div className="dashboard-header-info">
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', marginBottom: '6px' }}>
                             <h1 style={{ fontSize: '26px' }}>{dashboard.name}</h1>
-                            <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Rank {dashboard.rank}</span>
+                            <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Rang {dashboard.rank}</span>
                         </div>
                         <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '10px' }}>
                             {dashboard.expTotal} XP
@@ -44,8 +51,10 @@ function Dashboard() {
                     </div>
                 </div>
 
+                {history && <HistoryPanel history={history} />}
+
                 <div>
-                    <h2 className="section-title">Your disciplines</h2>
+                    <h2 className="section-title">Tes disciplines</h2>
                     <div className="disciplines-grid">
                         {dashboard.disciplines.map((discipline) => (
                             <button
@@ -55,11 +64,11 @@ function Dashboard() {
                                 onClick={() => navigate(`/discipline/${discipline.disciplineId}`)}
                             >
                                 <div className="discipline-card-head">
-                                    <span className="disc-dot" />
+                                    <DisciplineIcon icon={discipline.icon} />
                                     <span>{discipline.name}</span>
                                 </div>
-                                <p className="discipline-goal">{discipline.goal || 'No goal set yet'}</p>
-                                <div className="discipline-meta" style={{ marginBottom: '10px' }}>Rank {discipline.rank} &middot; {discipline.exp} XP</div>
+                                <p className="discipline-goal">{discipline.goal || 'Aucun objectif pour l\'instant'}</p>
+                                <div className="discipline-meta" style={{ marginBottom: '10px' }}>Rang {discipline.rank} &middot; {discipline.exp} XP</div>
                                 <div className="progress-track">
                                     <div className="progress-fill" style={{ width: `${discipline.progressPercent}%` }} />
                                 </div>
@@ -69,9 +78,23 @@ function Dashboard() {
                 </div>
 
                 <div>
-                    <h2 className="section-title">Recent activity</h2>
+                    <h2 className="section-title">Activité récente</h2>
                     <div className="panel activity-list">
-                        <p className="activity-empty">No activity yet</p>
+                        {!history || history.recent.length === 0 ? (
+                            <p className="activity-empty">Aucune activité pour l'instant. Valide une quête pour lancer ta série.</p>
+                        ) : (
+                            history.recent.map((item, index) => (
+                                <div className="activity-row" key={`${item.date}-${index}`}>
+                                    <span>
+                                        {item.label}
+                                        <span className="activity-meta"> &middot; {item.discipline} &middot; {item.date}</span>
+                                    </span>
+                                    <span className={item.expWon >= 0 ? 'activity-xp-positive' : 'activity-xp-negative'}>
+                                        {item.expWon >= 0 ? '+' : ''}{item.expWon} XP
+                                    </span>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
             </div>

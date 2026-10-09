@@ -701,13 +701,38 @@ label {
   padding: 0;
 }
 
+.quest-item {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--bg-track);
+}
+
+.quest-item:last-child {
+  border-bottom: none;
+}
+
+.quest-delete {
+  background: none;
+  border: none;
+  color: var(--text-placeholder);
+  font-size: 18px;
+  line-height: 1;
+  padding: 10px 18px;
+}
+
+.quest-delete:hover,
+.quest-delete:focus-visible {
+  color: var(--danger);
+}
+
 .quest-row {
   display: flex;
   align-items: center;
   gap: 14px;
   padding: 14px 22px;
   border: none;
-  border-bottom: 1px solid var(--bg-track);
+  flex: 1;
+  min-width: 0;
   width: 100%;
   text-align: left;
   cursor: pointer;
@@ -821,4 +846,109 @@ label {
 
 .xp-input {
   width: 90px;
+}
+
+/* History: streak and 30-day heatmap */
+
+.history-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 28px;
+  padding: 22px 26px;
+  margin-bottom: 28px;
+}
+
+.streak-stats {
+  display: flex;
+  gap: 28px;
+}
+
+.streak-stats > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.streak-value {
+  font-family: var(--font-display);
+  font-size: 30px;
+  color: var(--accent);
+  text-shadow: 0 0 12px var(--accent-glow);
+}
+
+.streak-value.muted {
+  color: var(--text-dim);
+  text-shadow: none;
+}
+
+.streak-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.history-heatmap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.heatmap {
+  display: grid;
+  grid-template-columns: repeat(15, 18px);
+  gap: 5px;
+}
+
+.heatmap-cell {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  background: var(--bg-track);
+}
+
+.heatmap-cell.level-1 { background: oklch(0.42 0.08 230); }
+.heatmap-cell.level-2 { background: oklch(0.55 0.12 230); }
+.heatmap-cell.level-3 { background: oklch(0.68 0.15 230); }
+.heatmap-cell.level-4 { background: var(--accent-hover); box-shadow: 0 0 8px var(--accent-glow); }
+.heatmap-cell.level-negative { background: var(--danger); opacity: 0.7; }
+
+@media (max-width: 560px) {
+  .heatmap {
+    grid-template-columns: repeat(10, 18px);
+  }
+}
+
+.activity-meta {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.disc-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.navbar-actions {
+  display: flex;
+  gap: 14px;
+}
+
+.hero-demo-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 14px 0 0;
+}
+
+@media (max-width: 720px) {
+  .navlinks {
+    margin-left: 16px;
+    gap: 16px;
+  }
+
+  .history-panel {
+    padding: 18px;
+  }
 }

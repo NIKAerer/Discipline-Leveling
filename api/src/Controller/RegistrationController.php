@@ -23,19 +23,19 @@ class RegistrationController
         $password = $data['password'] ?? '';
 
         if ($name === '' || $email === '' || !is_string($password) || $password === '') {
-            return new JsonResponse(['error' => 'Name, email and password are required'], 400);
+            return new JsonResponse(['error' => 'Pseudo, email et mot de passe obligatoires'], 400);
         }
 
         if (mb_strlen($name) > 50) {
-            return new JsonResponse(['error' => 'Name must be 50 characters or less'], 400);
+            return new JsonResponse(['error' => 'Le pseudo doit faire 50 caractères maximum'], 400);
         }
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return new JsonResponse(['error' => 'Email is not valid'], 400);
+            return new JsonResponse(['error' => 'Adresse email invalide'], 400);
         }
 
         if (mb_strlen($password) < 8) {
-            return new JsonResponse(['error' => 'Password must be at least 8 characters'], 400);
+            return new JsonResponse(['error' => 'Le mot de passe doit faire au moins 8 caractères'], 400);
         }
 
         $user = new User();
@@ -53,7 +53,7 @@ class RegistrationController
             $em->persist($user);
             $em->flush();
         } catch (UniqueConstraintViolationException $e) {
-            return new JsonResponse(['error' => 'This name or email is already taken'], 409);
+            return new JsonResponse(['error' => 'Ce pseudo ou cet email est déjà utilisé'], 409);
         }
 
         return new JsonResponse(['id' => $user->getId(), 'name' => $user->getName()], 201);

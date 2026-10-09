@@ -26,7 +26,7 @@ class CharacterController
         }
 
         if (empty($data['disciplines']) || !is_array($data['disciplines'])) {
-            return new JsonResponse(['error' => 'Disciplines are required'], 400);
+            return new JsonResponse(['error' => 'Choisis au moins une discipline'], 400);
         }
 
         foreach ($data['disciplines'] as $item) {
@@ -88,7 +88,7 @@ class CharacterController
         $discipline = $disciplineRepository->find($disciplineId);
 
         if (!$discipline) {
-            return new JsonResponse(['error' => 'Discipline not found'], 404);
+            return new JsonResponse(['error' => 'Discipline introuvable'], 404);
         }
 
         $tracking = $disciplineTrackingRepository->findOneBy([
@@ -97,7 +97,7 @@ class CharacterController
         ]);
 
         if (!$tracking) {
-            return new JsonResponse(['error' => 'Not tracked'], 404);
+            return new JsonResponse(['error' => 'Discipline non suivie'], 404);
         }
 
         return new JsonResponse([
@@ -117,7 +117,7 @@ class CharacterController
         $discipline = $disciplineRepository->find($disciplineId);
 
         if (!$discipline) {
-            return new JsonResponse(['error' => 'Discipline not found'], 404);
+            return new JsonResponse(['error' => 'Discipline introuvable'], 404);
         }
 
         $tracking = $disciplineTrackingRepository->findOneBy([
@@ -126,14 +126,14 @@ class CharacterController
         ]);
 
         if (!$tracking) {
-            return new JsonResponse(['error' => 'Not tracked'], 404);
+            return new JsonResponse(['error' => 'Discipline non suivie'], 404);
         }
 
         $data = JsonBody::decode($request);
         $goal = JsonBody::string($data, 'goal') ?? $tracking->getGoal();
 
         if (mb_strlen($goal) > 255) {
-            return new JsonResponse(['error' => 'Goal must be 255 characters or less'], 400);
+            return new JsonResponse(['error' => 'L\'objectif doit faire 255 caractères maximum'], 400);
         }
 
         $tracking->setGoal($goal);

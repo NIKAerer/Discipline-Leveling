@@ -11,8 +11,11 @@ function Home() {
     const [modalOpen, setModalOpen] = useState(() => Boolean(infoMessage))
     const [modalTab, setModalTab] = useState(() => infoMessage ? 'login' : 'register')
 
-    function openModal(tab) {
+    const [demoMode, setDemoMode] = useState(false)
+
+    function openModal(tab, demo = false) {
         setModalTab(tab)
+        setDemoMode(demo)
         setModalOpen(true)
     }
 
@@ -26,12 +29,12 @@ function Home() {
                     </svg>
                     <span>DISCIPLINE LEVELING</span>
                 </div>
-                <div style={{ display: 'flex', gap: '14px' }}>
+                <div className="navbar-actions">
                     <button type="button" className="btn-ghost" onClick={() => openModal('login')}>
-                        Login
+                        Connexion
                     </button>
                     <button type="button" className="btn-primary" onClick={() => openModal('register')}>
-                        Sign up
+                        Inscription
                     </button>
                 </div>
             </div>
@@ -44,32 +47,35 @@ function Home() {
 
             <div className="container hero">
                 <div className="hero-content">
-                    <div className="badge-tag">Personal progression system</div>
-                    <h1 className="hero-title">Become the protagonist of your own progression.</h1>
+                    <div className="badge-tag">Système de progression personnelle</div>
+                    <h1 className="hero-title">Deviens le héros de ta propre progression.</h1>
                     <p className="hero-text">
-                        Every real effort — LoL, code, sport, everyday discipline — becomes XP.
-                        Climb the ranks, from E to S, and watch your life turn into a character sheet.
+                        Chaque effort réel, en ranked, en code, au sport ou au quotidien, devient de l'XP.
+                        Grimpe les rangs de E à S et transforme ta vie en fiche de personnage.
                     </p>
                     <div className="hero-actions">
                         <button type="button" className="btn-primary" onClick={() => openModal('register')}>
-                            Start my progression &rarr;
+                            Commencer ma progression &rarr;
                         </button>
-                        <button type="button" className="btn-link" onClick={() => openModal('login')}>
-                            Already have an account? Log in
+                        <button type="button" className="btn-ghost" onClick={() => openModal('login', true)}>
+                            Essayer la démo
                         </button>
                     </div>
+                    <p className="hero-demo-hint">
+                        Pas envie de créer un compte ? La démo contient 30 jours d&apos;historique et 20 games LoL.
+                    </p>
                 </div>
 
                 {/* Static preview for visitors — not real user data */}
                 <div className="panel preview-card pulse-glow">
-                    <div className="preview-label">Character sheet</div>
+                    <div className="preview-label">Fiche de personnage</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
                         <div className="rank-diamond">
                             <span>B</span>
                         </div>
                         <div>
                             <div className="display" style={{ fontSize: '17px' }}>Nika</div>
-                            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Rank B &middot; 4,280 XP</div>
+                            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Rang B &middot; 1 240 XP</div>
                         </div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -97,27 +103,29 @@ function Home() {
                         <circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="4.5" /><circle cx="12" cy="12" r="1" />
                     </svg>
                     <h3>Disciplines</h3>
-                    <p>Choose the areas of your life to grow: LoL, code, sport, and more.</p>
+                    <p>Choisis les domaines de ta vie à faire progresser : LoL, code, sport, lecture…</p>
                 </div>
                 <div className="panel feature-card">
                     <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="oklch(0.75 0.15 230)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M5 13l4 4L19 7" />
                     </svg>
-                    <h3>Quests &amp; XP</h3>
-                    <p>Complete quests to earn XP, and take penalties if you slack off.</p>
+                    <h3>Quêtes &amp; XP</h3>
+                    <p>Valide tes quêtes du jour pour gagner de l'XP, et prends des malus si tu te relâches.</p>
                 </div>
                 <div className="panel feature-card">
                     <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="oklch(0.75 0.15 230)" strokeWidth="1.6" strokeLinejoin="round">
                         <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />
                     </svg>
-                    <h3>Rank system</h3>
-                    <p>Progress from rank E to rank S, just like in Solo Leveling.</p>
+                    <h3>Rangs et séries</h3>
+                    <p>Passe du rang E au rang S comme dans Solo Leveling, et entretiens ta série de jours.</p>
                 </div>
             </div>
 
             {modalOpen && (
                 <AuthModal
+                    key={`${modalTab}-${demoMode}`}
                     initialTab={modalTab}
+                    demo={demoMode}
                     onClose={() => setModalOpen(false)}
                 />
             )}

@@ -19,7 +19,7 @@ final class JsonBody
         $data = json_decode($request->getContent(), true);
 
         if (!is_array($data)) {
-            throw new BadRequestHttpException('The request body must be a JSON object');
+            throw new BadRequestHttpException('Le corps de la requête doit être un objet JSON');
         }
 
         return $data;
@@ -35,7 +35,7 @@ final class JsonBody
         }
 
         if (!is_string($data[$key])) {
-            throw new BadRequestHttpException(sprintf('The "%s" field must be a string', $key));
+            throw new BadRequestHttpException(sprintf('Le champ "%s" doit être un texte', $key));
         }
 
         return trim($data[$key]);

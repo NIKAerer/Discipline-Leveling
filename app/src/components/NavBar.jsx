@@ -23,16 +23,13 @@ function NavBar() {
                     <Link to="/dashboard" className={`navlink ${location.pathname === '/dashboard' ? 'active' : ''}`}>
                         Dashboard
                     </Link>
-                    <span className="navlink disabled" title="Coming soon">
-                        Disciplines
-                    </span>
                     <Link to="/profile" className={`navlink ${location.pathname === '/profile' ? 'active' : ''}`}>
-                        Profile
+                        Profil
                     </Link>
                 </div>
             </div>
             <button type="button" className="btn-ghost" onClick={handleLogout}>
-                Logout
+                Déconnexion
             </button>
         </div>
     )

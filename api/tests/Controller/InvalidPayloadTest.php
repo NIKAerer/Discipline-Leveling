@@ -14,7 +14,7 @@ class InvalidPayloadTest extends ApiTestCase
         $this->requestJson('POST', '/api/register', rawBody: '{pas du json');
 
         $this->assertResponseStatusCodeSame(400);
-        $this->assertSame('The request body must be a JSON object', $this->responseData()['error']);
+        $this->assertSame('Le corps de la requête doit être un objet JSON', $this->responseData()['error']);
     }
 
     public function testEmptyBodyOnAuthenticatedRouteReturns400(): void
@@ -31,6 +31,6 @@ class InvalidPayloadTest extends ApiTestCase
         $this->requestJson('POST', '/api/register', ['name' => ['tableau'], 'email' => 'type@example.com', 'password' => 'MotDePasse123!']);
 
         $this->assertResponseStatusCodeSame(400);
-        $this->assertSame('The "name" field must be a string', $this->responseData()['error']);
+        $this->assertSame('Le champ "name" doit être un texte', $this->responseData()['error']);
     }
 }

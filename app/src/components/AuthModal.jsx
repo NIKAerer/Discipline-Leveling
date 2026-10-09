@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { extractErrorMessage } from '../utils/api'
+import { apiFetch, extractErrorMessage } from '../utils/api'
+import { DEMO_ACCOUNT } from '../utils/demo'
 
-function AuthModal({ initialTab, onClose }) {
+function AuthModal({ initialTab, demo = false, onClose }) {
     const [activeTab, setActiveTab] = useState(initialTab)
     const [name, setName] = useState('')
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
+    const [email, setEmail] = useState(demo ? DEMO_ACCOUNT.email : '')
+    const [password, setPassword] = useState(demo ? DEMO_ACCOUNT.password : '')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [error, setError] = useState('')
-    const [info, setInfo] = useState('')
+    const [info, setInfo] = useState(demo ? 'Compte de démo pré-rempli : il ne reste qu\'à te connecter.' : '')
     const navigate = useNavigate()
 
     useEffect(() => {
@@ -35,14 +36,15 @@ function AuthModal({ initialTab, onClose }) {
         setError('')
 
         try {
-            const response = await fetch('http://localhost:8000/api/login_check', {
+            const response = await apiFetch('/api/login_check', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),
             })
 
             if (!response.ok) {
-                setError(await extractErrorMessage(response, 'An error occurred during login'))
+                setError(response.status === 401
+                    ? 'Email ou mot de passe incorrect'
+                    : await extractErrorMessage(response, 'Connexion impossible'))
                 return
             }
 
@@ -52,9 +54,7 @@ function AuthModal({ initialTab, onClose }) {
             // Check if this user already has a character (tracked disciplines),
             // so a returning user goes straight to the dashboard instead of
             // being sent back through character creation every time.
-            const characterResponse = await fetch('http://localhost:8000/api/character', {
-                headers: { 'Authorization': `Bearer ${data.token}` },
-            })
+            const characterResponse = await apiFetch('/api/character')
 
             if (!characterResponse.ok) {
                 // Login itself succeeded — don't block the user with an error
@@ -70,7 +70,7 @@ function AuthModal({ initialTab, onClose }) {
             onClose()
             navigate(disciplines.length > 0 ? '/dashboard' : '/create-character')
         } catch {
-            setError('Server error — is the API running on localhost:8000?')
+            setError('Impossible de joindre le serveur. Réessaie plus tard.')
         }
     }
 
@@ -79,35 +79,34 @@ function AuthModal({ initialTab, onClose }) {
         setError('')
 
         if (password !== confirmPassword) {
-            setError("Passwords don't match")
+            setError('Les mots de passe ne correspondent pas')
             return
         }
 
         try {
-            const response = await fetch('http://localhost:8000/api/register', {
+            const response = await apiFetch('/api/register', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, email, password }),
             })
 
             if (!response.ok) {
-                setError(await extractErrorMessage(response, 'An error occurred during registration'))
+                setError(await extractErrorMessage(response, 'Une erreur est survenue pendant l\'inscription'))
                 return
             }
 
             setPassword('')
             setConfirmPassword('')
-            setInfo('Account created! Log in to continue.')
+            setInfo('Compte créé ! Connecte-toi pour continuer.')
             setActiveTab('login')
         } catch {
-            setError('Server error — is the API running on localhost:8000?')
+            setError('Impossible de joindre le serveur. Réessaie plus tard.')
         }
     }
 
     return (
         <div className="modal-backdrop" onClick={onClose}>
             <div className="panel modal-panel" onClick={(e) => e.stopPropagation()}>
-                <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
+                <button type="button" className="modal-close" onClick={onClose} aria-label="Fermer">
                     &times;
                 </button>
 
@@ -125,22 +124,22 @@ function AuthModal({ initialTab, onClose }) {
                         className={`tab ${activeTab === 'login' ? 'active' : ''}`}
                         onClick={() => switchTab('login')}
                     >
-                        Login
+                        Connexion
                     </button>
                     <button
                         type="button"
                         className={`tab ${activeTab === 'register' ? 'active' : ''}`}
                         onClick={() => switchTab('register')}
                     >
-                        Register
+                        Inscription
                     </button>
                 </div>
 
                 {activeTab === 'login' ? (
                     <>
-                        <h2 style={{ fontSize: '19px', marginBottom: '6px' }}>Welcome back</h2>
+                        <h2 style={{ fontSize: '19px', marginBottom: '6px' }}>Bon retour</h2>
                         <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '0 0 24px' }}>
-                            Log in to continue your progression.
+                            Connecte-toi pour reprendre ta progression.
                         </p>
 
                         {info && <p className="msg-success" style={{ marginBottom: '16px' }}>{info}</p>}
@@ -152,13 +151,13 @@ function AuthModal({ initialTab, onClose }) {
                                 <input
                                     className="field"
                                     type="email"
-                                    placeholder="you@example.com"
+                                    placeholder="toi@exemple.fr"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                 />
                             </div>
                             <div>
-                                <label>Password</label>
+                                <label>Mot de passe</label>
                                 <input
                                     className="field"
                                     type="password"
@@ -168,22 +167,22 @@ function AuthModal({ initialTab, onClose }) {
                                 />
                             </div>
                             <button type="submit" className="btn-primary" style={{ marginTop: '8px' }}>
-                                Login
+                                Se connecter
                             </button>
                         </form>
                     </>
                 ) : (
                     <>
-                        <h2 style={{ fontSize: '19px', marginBottom: '6px' }}>Create your account</h2>
+                        <h2 style={{ fontSize: '19px', marginBottom: '6px' }}>Crée ton compte</h2>
                         <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '0 0 24px' }}>
-                            The first step before creating your character.
+                            La première étape avant de créer ton personnage.
                         </p>
 
                         {error && <p className="msg-error" style={{ marginBottom: '16px' }}>{error}</p>}
 
                         <form className="form-stack" onSubmit={handleRegister}>
                             <div>
-                                <label>Username</label>
+                                <label>Pseudo</label>
                                 <input
                                     className="field"
                                     type="text"
@@ -197,13 +196,13 @@ function AuthModal({ initialTab, onClose }) {
                                 <input
                                     className="field"
                                     type="email"
-                                    placeholder="you@example.com"
+                                    placeholder="toi@exemple.fr"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                 />
                             </div>
                             <div>
-                                <label>Password</label>
+                                <label>Mot de passe</label>
                                 <input
                                     className="field"
                                     type="password"
@@ -213,7 +212,7 @@ function AuthModal({ initialTab, onClose }) {
                                 />
                             </div>
                             <div>
-                                <label>Confirm Password</label>
+                                <label>Confirmer le mot de passe</label>
                                 <input
                                     className="field"
                                     type="password"
@@ -223,7 +222,7 @@ function AuthModal({ initialTab, onClose }) {
                                 />
                             </div>
                             <button type="submit" className="btn-primary" style={{ marginTop: '8px' }}>
-                                Create my account
+                                Créer mon compte
                             </button>
                         </form>
                     </>
