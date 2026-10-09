@@ -31,7 +31,9 @@ jobs:
         run: composer test
 
       - name: Vérifier que les entités correspondent au schéma
-        run: php bin/console doctrine:schema:validate --env=test
+        run: |
+          php bin/console doctrine:schema:update --dump-sql --env=test
+          php bin/console doctrine:schema:validate --env=test
 
   app:
     name: App (React)
