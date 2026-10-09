@@ -484,14 +484,16 @@ label {
   display: flex;
   align-items: center;
   gap: 64px;
-  padding: 80px 0;
+  padding-top: 80px;
+  padding-bottom: 80px;
 }
 
 @media (max-width: 900px) {
   .hero {
     flex-direction: column;
     align-items: stretch;
-    padding: 48px 0;
+    padding-top: 48px;
+    padding-bottom: 48px;
     gap: 32px;
   }
 }
