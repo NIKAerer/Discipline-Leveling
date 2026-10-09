@@ -123,3 +123,34 @@ jobs:
         with:
           name: playwright-results
           path: app/test-results/
+
+  docker:
+    name: Image de production (Docker)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Construire l'image de l'API
+        run: docker build -t discipline-leveling-api api
+
+      # Démarre l'image comme sur Render, puis vérifie qu'on peut se connecter
+      # au compte de démo : clés JWT, base et seed fonctionnent en production.
+      - name: Démarrer l'image et tester la connexion
+        run: |
+          docker run -d --name api -p 8080:8080 \
+            -e APP_SECRET=ci_only_not_a_secret \
+            -e JWT_PASSPHRASE=ci_only_not_a_secret \
+            discipline-leveling-api
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8080/api/disciplines > /dev/null && break
+            sleep 2
+          done
+          curl -sf -X POST http://127.0.0.1:8080/api/login_check \
+            -H 'Content-Type: application/json' \
+            -d '{"email":"demo@discipline-leveling.fr","password":"Demo1234!"}' \
+            | grep -q '"token"'
+          echo "Connexion au compte de démo réussie."
+
+      - name: Afficher les logs du conteneur en cas d'échec
+        if: failure()
+        run: docker logs api || true
