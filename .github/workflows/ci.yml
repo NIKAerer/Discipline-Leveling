@@ -54,3 +54,50 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+
+  e2e:
+    name: Bout en bout (Playwright)
+    runs-on: ubuntu-latest
+    env:
+      APP_ENV: dev
+      APP_SECRET: e2e_only_not_a_secret
+      JWT_PASSPHRASE: e2e_only_not_a_secret
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_sqlite, intl
+          coverage: none
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Préparer l'API (clés JWT, base, compte de démo)
+        working-directory: api
+        run: |
+          composer install --no-interaction --no-progress --prefer-dist
+          composer setup
+
+      - name: Installer le front et Chromium
+        working-directory: app
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Lancer les tests de bout en bout (avec captures d'écran)
+        working-directory: app
+        run: |
+          mkdir -p ../docs/screenshots
+          SCREENSHOTS=1 npm run test:e2e
+
+      - name: Publier les captures d'écran
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: docs/screenshots/
