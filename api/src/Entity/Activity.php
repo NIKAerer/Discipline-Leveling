@@ -6,6 +6,7 @@ use App\Repository\ActivityRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ActivityRepository::class)]
+#[ORM\UniqueConstraint(name: 'UNIQ_ACTIVITY_QUEST_DATE', columns: ['quest_id', 'date'])]
 class Activity
 {
     #[ORM\Id]

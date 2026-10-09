@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: DisciplineTrackingRepository::class)]
+#[ORM\UniqueConstraint(name: 'UNIQ_DISCIPLINE_TRACKING_USER_DISCIPLINE', columns: ['user_id', 'discipline_id'])]
 class DisciplineTracking
 {
     #[ORM\Id]
