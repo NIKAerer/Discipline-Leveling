@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import NavBar from '../components/NavBar'
-import { extractErrorMessage } from '../utils/api'
+import { apiFetch, extractErrorMessage } from '../utils/api'
 
 function Profile() {
     const [name, setName] = useState('')
@@ -23,13 +23,12 @@ function Profile() {
     const [loading, setLoading] = useState(true)
 
     const navigate = useNavigate()
-    const token = localStorage.getItem('token')
 
     useEffect(() => {
         Promise.all([
-            fetch('http://localhost:8000/api/profile', { headers: { 'Authorization': `Bearer ${token}` } }).then((r) => r.json()),
-            fetch('http://localhost:8000/api/disciplines').then((r) => r.json()),
-            fetch('http://localhost:8000/api/character', { headers: { 'Authorization': `Bearer ${token}` } }).then((r) => r.json()),
+            apiFetch('/api/profile').then((r) => r.json()),
+            apiFetch('/api/disciplines').then((r) => r.json()),
+            apiFetch('/api/character').then((r) => r.json()),
         ]).then(([profile, disciplines, tracked]) => {
             setName(profile.name)
             setEmail(profile.email)
@@ -39,7 +38,7 @@ function Profile() {
             setTrackedIds(tracked.map((t) => t.disciplineId))
             setLoading(false)
         })
-    }, [token])
+    }, [])
 
     function toggleNewDiscipline(id) {
         setSelectedNewDisciplines((prev) =>
@@ -53,9 +52,8 @@ function Profile() {
         setProfileSuccess('')
 
         try {
-            const response = await fetch('http://localhost:8000/api/profile', {
+            const response = await apiFetch('/api/profile', {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ name, email }),
             })
 
@@ -77,7 +75,7 @@ function Profile() {
 
             setProfileSuccess('Profile updated!')
         } catch {
-            setProfileError('Server error — is the API running on localhost:8000?')
+            setProfileError('Unable to reach the server. Please try again later.')
         }
     }
 
@@ -94,9 +92,8 @@ function Profile() {
         const payload = selectedNewDisciplines.map((disciplineId) => ({ disciplineId, goal: '' }))
 
         try {
-            const response = await fetch('http://localhost:8000/api/character', {
+            const response = await apiFetch('/api/character', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ disciplines: payload }),
             })
 
@@ -109,7 +106,7 @@ function Profile() {
             setSelectedNewDisciplines([])
             setDisciplinesSuccess('Disciplines added! Check your dashboard.')
         } catch {
-            setDisciplinesError('Server error — is the API running on localhost:8000?')
+            setDisciplinesError('Unable to reach the server. Please try again later.')
         }
     }
 
@@ -117,9 +114,8 @@ function Profile() {
         setDeleteError('')
 
         try {
-            const response = await fetch('http://localhost:8000/api/profile', {
+            const response = await apiFetch('/api/profile', {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` },
             })
 
             if (!response.ok) {
@@ -130,7 +126,7 @@ function Profile() {
             localStorage.removeItem('token')
             navigate('/')
         } catch {
-            setDeleteError('Server error — is the API running on localhost:8000?')
+            setDeleteError('Unable to reach the server. Please try again later.')
         }
     }
 
