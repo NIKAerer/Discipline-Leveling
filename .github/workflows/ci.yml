@@ -137,7 +137,9 @@ jobs:
       # au compte de démo : clés JWT, base et seed fonctionnent en production.
       - name: Démarrer l'image et tester la connexion
         run: |
+          # Sans aucune capability Linux, comme sur Render.
           docker run -d --name api -p 8080:8080 \
+            --cap-drop=ALL \
             -e APP_SECRET=ci_only_not_a_secret \
             -e JWT_PASSPHRASE=ci_only_not_a_secret \
             discipline-leveling-api
