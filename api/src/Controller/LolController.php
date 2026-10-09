@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\LolMatch;
 use App\Entity\User;
+use App\Http\JsonBody;
 use App\Repository\DisciplineRepository;
 use App\Repository\DisciplineTrackingRepository;
 use App\Repository\LolMatchRepository;
@@ -30,12 +31,8 @@ class LolController
     }
 
     #[Route('/api/lol/overview', name: 'api_lol_overview', methods: ['GET'])]
-    public function overview(DisciplineRepository $disciplineRepository, DisciplineTrackingRepository $disciplineTrackingRepository, LolMatchRepository $lolMatchRepository, #[CurrentUser] ?User $user): JsonResponse
+    public function overview(DisciplineRepository $disciplineRepository, DisciplineTrackingRepository $disciplineTrackingRepository, LolMatchRepository $lolMatchRepository, #[CurrentUser] User $user): JsonResponse
     {
-        if (!$user) {
-            return new JsonResponse(['error' => 'Not authenticated'], 401);
-        }
-
         $tracking = $this->getLolTracking($user, $disciplineRepository, $disciplineTrackingRepository);
 
         if (!$tracking) {
@@ -120,22 +117,18 @@ class LolController
     }
 
     #[Route('/api/lol/matches', name: 'api_lol_matches_create', methods: ['POST'])]
-    public function createMatch(Request $request, EntityManagerInterface $em, DisciplineRepository $disciplineRepository, DisciplineTrackingRepository $disciplineTrackingRepository, #[CurrentUser] ?User $user): JsonResponse
+    public function createMatch(Request $request, EntityManagerInterface $em, DisciplineRepository $disciplineRepository, DisciplineTrackingRepository $disciplineTrackingRepository, #[CurrentUser] User $user): JsonResponse
     {
-        if (!$user) {
-            return new JsonResponse(['error' => 'Not authenticated'], 401);
-        }
-
         $tracking = $this->getLolTracking($user, $disciplineRepository, $disciplineTrackingRepository);
 
         if (!$tracking) {
             return new JsonResponse(['error' => 'You are not tracking the LoL discipline yet'], 404);
         }
 
-        $data = json_decode($request->getContent(), true);
-        $champion = trim($data['champion'] ?? '');
-        $role = isset($data['role']) ? trim((string) $data['role']) : null;
-        $matchup = isset($data['matchup']) ? trim((string) $data['matchup']) : null;
+        $data = JsonBody::decode($request);
+        $champion = JsonBody::string($data, 'champion') ?? '';
+        $role = JsonBody::string($data, 'role');
+        $matchup = JsonBody::string($data, 'matchup');
         $win = $data['win'] ?? null;
         $kills = $data['kills'] ?? null;
         $deaths = $data['deaths'] ?? null;
@@ -197,12 +190,8 @@ class LolController
     }
 
     #[Route('/api/lol/matches/{matchId}', name: 'api_lol_matches_delete', methods: ['DELETE'])]
-    public function deleteMatch(int $matchId, EntityManagerInterface $em, LolMatchRepository $lolMatchRepository, #[CurrentUser] ?User $user): JsonResponse
+    public function deleteMatch(int $matchId, EntityManagerInterface $em, LolMatchRepository $lolMatchRepository, #[CurrentUser] User $user): JsonResponse
     {
-        if (!$user) {
-            return new JsonResponse(['error' => 'Not authenticated'], 401);
-        }
-
         $match = $lolMatchRepository->find($matchId);
 
         if (!$match || $match->getDisciplineTracking()->getUser() !== $user) {
@@ -216,19 +205,15 @@ class LolController
     }
 
     #[Route('/api/lol/settings', name: 'api_lol_settings_update', methods: ['PATCH'])]
-    public function updateSettings(Request $request, EntityManagerInterface $em, DisciplineRepository $disciplineRepository, DisciplineTrackingRepository $disciplineTrackingRepository, #[CurrentUser] ?User $user): JsonResponse
+    public function updateSettings(Request $request, EntityManagerInterface $em, DisciplineRepository $disciplineRepository, DisciplineTrackingRepository $disciplineTrackingRepository, #[CurrentUser] User $user): JsonResponse
     {
-        if (!$user) {
-            return new JsonResponse(['error' => 'Not authenticated'], 401);
-        }
-
         $tracking = $this->getLolTracking($user, $disciplineRepository, $disciplineTrackingRepository);
 
         if (!$tracking) {
             return new JsonResponse(['error' => 'You are not tracking the LoL discipline yet'], 404);
         }
 
-        $data = json_decode($request->getContent(), true);
+        $data = JsonBody::decode($request);
 
         if (!array_key_exists('lpGoal', $data) && !array_key_exists('lpStarting', $data)) {
             return new JsonResponse(['error' => 'lpGoal or lpStarting is required'], 400);

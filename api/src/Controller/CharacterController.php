@@ -2,8 +2,9 @@
 
 namespace App\Controller;
 
-use App\Entity\User;
 use App\Entity\DisciplineTracking;
+use App\Entity\User;
+use App\Http\JsonBody;
 use App\Repository\DisciplineRepository;
 use App\Repository\DisciplineTrackingRepository;
 use App\Service\RankCalculator;
@@ -16,16 +17,12 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 class CharacterController
 {
     #[Route('/api/character', name: 'api_character_create', methods: ['POST'])]
-    public function create(Request $request, EntityManagerInterface $em, DisciplineRepository $disciplineRepository, DisciplineTrackingRepository $disciplineTrackingRepository, #[CurrentUser] ?User $user): JsonResponse
+    public function create(Request $request, EntityManagerInterface $em, DisciplineRepository $disciplineRepository, DisciplineTrackingRepository $disciplineTrackingRepository, #[CurrentUser] User $user): JsonResponse
     {
-        if (!$user) {
-            return new JsonResponse(['error' => 'Not authenticated'], 401);
-        }
-
-        $data = json_decode($request->getContent(), true);
+        $data = JsonBody::decode($request);
 
         if (array_key_exists('avatar', $data)) {
-            $user->setAvatar($data['avatar']);
+            $user->setAvatar(JsonBody::string($data, 'avatar'));
         }
 
         if (empty($data['disciplines']) || !is_array($data['disciplines'])) {
@@ -33,7 +30,11 @@ class CharacterController
         }
 
         foreach ($data['disciplines'] as $item) {
-            $discipline = $disciplineRepository->find($item['disciplineId'] ?? null);
+            if (!is_array($item) || !is_int($item['disciplineId'] ?? null)) {
+                continue;
+            }
+
+            $discipline = $disciplineRepository->find($item['disciplineId']);
 
             if (!$discipline) {
                 continue;
@@ -51,7 +52,7 @@ class CharacterController
             $tracking = new DisciplineTracking();
             $tracking->setUser($user);
             $tracking->setDiscipline($discipline);
-            $tracking->setGoal($item['goal'] ?? '');
+            $tracking->setGoal(is_string($item['goal'] ?? null) ? trim($item['goal']) : '');
             $tracking->setExp(0);
             $tracking->setRank('E');
 
@@ -64,12 +65,8 @@ class CharacterController
     }
 
     #[Route('/api/character', name: 'api_character_list', methods: ['GET'])]
-    public function list(DisciplineTrackingRepository $disciplineTrackingRepository, #[CurrentUser] ?User $user): JsonResponse
+    public function list(DisciplineTrackingRepository $disciplineTrackingRepository, #[CurrentUser] User $user): JsonResponse
     {
-        if (!$user) {
-            return new JsonResponse(['error' => 'Not authenticated'], 401);
-        }
-
         $trackings = $disciplineTrackingRepository->findBy(['user' => $user]);
 
         $data = [];
@@ -86,12 +83,8 @@ class CharacterController
     }
 
     #[Route('/api/character/{disciplineId}', name: 'api_character_detail', methods: ['GET'])]
-    public function detail(int $disciplineId, DisciplineRepository $disciplineRepository, DisciplineTrackingRepository $disciplineTrackingRepository, RankCalculator $rankCalculator, #[CurrentUser] ?User $user): JsonResponse
+    public function detail(int $disciplineId, DisciplineRepository $disciplineRepository, DisciplineTrackingRepository $disciplineTrackingRepository, RankCalculator $rankCalculator, #[CurrentUser] User $user): JsonResponse
     {
-        if (!$user) {
-            return new JsonResponse(['error' => 'Not authenticated'], 401);
-        }
-
         $discipline = $disciplineRepository->find($disciplineId);
 
         if (!$discipline) {
@@ -119,12 +112,8 @@ class CharacterController
     }
 
     #[Route('/api/character/{disciplineId}', name: 'api_character_update', methods: ['PATCH'])]
-    public function update(int $disciplineId, Request $request, EntityManagerInterface $em, DisciplineRepository $disciplineRepository, DisciplineTrackingRepository $disciplineTrackingRepository, #[CurrentUser] ?User $user): JsonResponse
+    public function update(int $disciplineId, Request $request, EntityManagerInterface $em, DisciplineRepository $disciplineRepository, DisciplineTrackingRepository $disciplineTrackingRepository, #[CurrentUser] User $user): JsonResponse
     {
-        if (!$user) {
-            return new JsonResponse(['error' => 'Not authenticated'], 401);
-        }
-
         $discipline = $disciplineRepository->find($disciplineId);
 
         if (!$discipline) {
@@ -140,8 +129,14 @@ class CharacterController
             return new JsonResponse(['error' => 'Not tracked'], 404);
         }
 
-        $data = json_decode($request->getContent(), true);
-        $tracking->setGoal($data['goal'] ?? $tracking->getGoal());
+        $data = JsonBody::decode($request);
+        $goal = JsonBody::string($data, 'goal') ?? $tracking->getGoal();
+
+        if (mb_strlen($goal) > 255) {
+            return new JsonResponse(['error' => 'Goal must be 255 characters or less'], 400);
+        }
+
+        $tracking->setGoal($goal);
 
         $em->flush();
 
