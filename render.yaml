@@ -1,0 +1,19 @@
+# Blueprint Render : déploie l'API Symfony depuis api/Dockerfile.
+# Dans Render : New > Blueprint, puis choisir ce dépôt.
+services:
+  - type: web
+    name: discipline-leveling-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./api/Dockerfile
+    dockerContext: ./api
+    healthCheckPath: /api/disciplines
+    envVars:
+      # Générés par Render au premier déploiement, jamais écrits dans le dépôt.
+      - key: APP_SECRET
+        generateValue: true
+      - key: JWT_PASSPHRASE
+        generateValue: true
+      # Adresse du front autorisée à appeler l'API (expression régulière).
+      - key: CORS_ALLOW_ORIGIN
+        value: '^https://discipline-leveling[a-z0-9-]*\.vercel\.app$'

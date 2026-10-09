@@ -1,0 +1,13 @@
+{
+	frankenphp
+	# HTTPS est géré par l'hébergeur, le conteneur sert en HTTP simple.
+	auto_https off
+	admin off
+}
+
+:{$PORT:8080} {
+	root * /app/public
+	encode zstd gzip
+	# Envoie toutes les requêtes vers public/index.php (contrôleur frontal Symfony).
+	php_server
+}
