@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import NavBar from '../components/NavBar'
+import { apiFetch } from '../utils/api'
 
 function Dashboard() {
     const [dashboard, setDashboard] = useState(null)
     const navigate = useNavigate()
 
     useEffect(() => {
-        const token = localStorage.getItem('token')
-        fetch('http://localhost:8000/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } })
+        apiFetch('/api/dashboard')
             .then((response) => response.json())
             .then((data) => setDashboard(data))
     }, [])

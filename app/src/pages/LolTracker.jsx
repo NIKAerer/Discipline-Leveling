@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import NavBar from '../components/NavBar'
-import { extractErrorMessage } from '../utils/api'
-
-const API_BASE = 'http://localhost:8000'
+import { apiFetch, extractErrorMessage } from '../utils/api'
 
 function LpChart({ matches, lpGoal }) {
     if (matches.length < 2) {
@@ -83,12 +81,8 @@ function LolTracker() {
     const [startingInput, setStartingInput] = useState('')
     const [settingsSaved, setSettingsSaved] = useState(false)
 
-    const token = localStorage.getItem('token')
-
     async function refreshOverview() {
-        const response = await fetch(`${API_BASE}/api/lol/overview`, {
-            headers: { Authorization: `Bearer ${token}` },
-        })
+        const response = await apiFetch(`/api/lol/overview`)
 
         if (response.status === 404) {
             setNotTracked(true)
@@ -104,9 +98,7 @@ function LolTracker() {
     }
 
     useEffect(() => {
-        fetch(`${API_BASE}/api/lol/overview`, {
-            headers: { Authorization: `Bearer ${token}` },
-        })
+        apiFetch(`/api/lol/overview`)
             .then(async (response) => {
                 if (response.status === 404) {
                     setNotTracked(true)
@@ -121,7 +113,7 @@ function LolTracker() {
                 setLoading(false)
             })
             .catch(() => setLoading(false))
-    }, [token])
+    }, [])
 
     function updateField(field, value) {
         setForm((prev) => ({ ...prev, [field]: value }))
@@ -148,9 +140,8 @@ function LolTracker() {
         }
 
         try {
-            const response = await fetch(`${API_BASE}/api/lol/matches`, {
+            const response = await apiFetch(`/api/lol/matches`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({
                     champion: form.champion.trim(),
                     role: form.role.trim() || null,
@@ -173,15 +164,14 @@ function LolTracker() {
             setForm(emptyForm)
             await refreshOverview()
         } catch {
-            setFormError('Server error — is the API running on localhost:8000?')
+            setFormError('Unable to reach the server. Please try again later.')
         }
     }
 
     async function deleteMatch(matchId) {
         try {
-            const response = await fetch(`${API_BASE}/api/lol/matches/${matchId}`, {
+            const response = await apiFetch(`/api/lol/matches/${matchId}`, {
                 method: 'DELETE',
-                headers: { Authorization: `Bearer ${token}` },
             })
 
             if (response.ok) {
@@ -196,9 +186,8 @@ function LolTracker() {
         e.preventDefault()
         setSettingsSaved(false)
 
-        const response = await fetch(`${API_BASE}/api/lol/settings`, {
+        const response = await apiFetch(`/api/lol/settings`, {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({
                 lpGoal: goalInput === '' ? null : Number(goalInput),
                 lpStarting: startingInput === '' ? null : Number(startingInput),
