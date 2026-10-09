@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { extractErrorMessage } from '../utils/api'
+import { apiFetch, extractErrorMessage } from '../utils/api'
 
 function AuthModal({ initialTab, onClose }) {
     const [activeTab, setActiveTab] = useState(initialTab)
@@ -35,9 +35,8 @@ function AuthModal({ initialTab, onClose }) {
         setError('')
 
         try {
-            const response = await fetch('http://localhost:8000/api/login_check', {
+            const response = await apiFetch('/api/login_check', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),
             })
 
@@ -52,9 +51,7 @@ function AuthModal({ initialTab, onClose }) {
             // Check if this user already has a character (tracked disciplines),
             // so a returning user goes straight to the dashboard instead of
             // being sent back through character creation every time.
-            const characterResponse = await fetch('http://localhost:8000/api/character', {
-                headers: { 'Authorization': `Bearer ${data.token}` },
-            })
+            const characterResponse = await apiFetch('/api/character')
 
             if (!characterResponse.ok) {
                 // Login itself succeeded — don't block the user with an error
@@ -70,7 +67,7 @@ function AuthModal({ initialTab, onClose }) {
             onClose()
             navigate(disciplines.length > 0 ? '/dashboard' : '/create-character')
         } catch {
-            setError('Server error — is the API running on localhost:8000?')
+            setError('Unable to reach the server. Please try again later.')
         }
     }
 
@@ -84,9 +81,8 @@ function AuthModal({ initialTab, onClose }) {
         }
 
         try {
-            const response = await fetch('http://localhost:8000/api/register', {
+            const response = await apiFetch('/api/register', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, email, password }),
             })
 
@@ -100,7 +96,7 @@ function AuthModal({ initialTab, onClose }) {
             setInfo('Account created! Log in to continue.')
             setActiveTab('login')
         } catch {
-            setError('Server error — is the API running on localhost:8000?')
+            setError('Unable to reach the server. Please try again later.')
         }
     }
 
