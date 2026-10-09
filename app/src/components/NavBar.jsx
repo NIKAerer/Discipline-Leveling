@@ -21,7 +21,7 @@ function NavBar() {
                 </div>
                 <div className="navlinks">
                     <Link to="/dashboard" className={`navlink ${location.pathname === '/dashboard' ? 'active' : ''}`}>
-                        Dashboard
+                        Tableau de bord
                     </Link>
                     <Link to="/profile" className={`navlink ${location.pathname === '/profile' ? 'active' : ''}`}>
                         Profil
