@@ -1,1 +1,12 @@
+# Documents de conception gardés en local
 Discipline Leveling — Wireframes.pdf
+
+# Fichiers locaux et secrets (jamais dans le dépôt)
+.env.local
+.env.*.local
+
+# Éditeurs et système
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
