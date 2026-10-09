@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Http\JsonBody;
 use App\Repository\DisciplineTrackingRepository;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
@@ -14,12 +15,8 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 class ProfileController
 {
     #[Route('/api/profile', name: 'api_profile_show', methods: ['GET'])]
-    public function show(#[CurrentUser] ?User $user): JsonResponse
+    public function show(#[CurrentUser] User $user): JsonResponse
     {
-        if (!$user) {
-            return new JsonResponse(['error' => 'Not authenticated'], 401);
-        }
-
         return new JsonResponse([
             'name' => $user->getName(),
             'email' => $user->getEmail(),
@@ -30,30 +27,26 @@ class ProfileController
     }
 
     #[Route('/api/profile', name: 'api_profile_update', methods: ['PATCH'])]
-    public function update(Request $request, EntityManagerInterface $em, #[CurrentUser] ?User $user): JsonResponse
+    public function update(Request $request, EntityManagerInterface $em, #[CurrentUser] User $user): JsonResponse
     {
-        if (!$user) {
-            return new JsonResponse(['error' => 'Not authenticated'], 401);
-        }
-
-        $data = json_decode($request->getContent(), true);
+        $data = JsonBody::decode($request);
         $emailChanged = false;
 
         if (array_key_exists('name', $data)) {
-            $name = trim($data['name']);
+            $name = JsonBody::string($data, 'name') ?? '';
 
-            if ($name === '') {
-                return new JsonResponse(['error' => 'Name cannot be empty'], 400);
+            if ($name === '' || mb_strlen($name) > 50) {
+                return new JsonResponse(['error' => 'Name must be between 1 and 50 characters'], 400);
             }
 
             $user->setName($name);
         }
 
         if (array_key_exists('email', $data)) {
-            $email = strtolower(trim($data['email']));
+            $email = strtolower(JsonBody::string($data, 'email') ?? '');
 
-            if ($email === '') {
-                return new JsonResponse(['error' => 'Email cannot be empty'], 400);
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                return new JsonResponse(['error' => 'Email is not valid'], 400);
             }
 
             if ($email !== $user->getEmail()) {
@@ -77,12 +70,8 @@ class ProfileController
     }
 
     #[Route('/api/profile', name: 'api_profile_delete', methods: ['DELETE'])]
-    public function delete(EntityManagerInterface $em, DisciplineTrackingRepository $disciplineTrackingRepository, #[CurrentUser] ?User $user): JsonResponse
+    public function delete(EntityManagerInterface $em, DisciplineTrackingRepository $disciplineTrackingRepository, #[CurrentUser] User $user): JsonResponse
     {
-        if (!$user) {
-            return new JsonResponse(['error' => 'Not authenticated'], 401);
-        }
-
         // No cascade/orphanRemoval is configured between User and DisciplineTracking,
         // so the related rows (and their own Quest/Activity children) are removed
         // by hand, in dependency order, before the user itself.

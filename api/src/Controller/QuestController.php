@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Activity;
 use App\Entity\Quest;
 use App\Entity\User;
+use App\Http\JsonBody;
 use App\Repository\ActivityRepository;
 use App\Repository\DisciplineTrackingRepository;
 use App\Repository\QuestRepository;
@@ -19,12 +20,8 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 class QuestController
 {
     #[Route('/api/character/{disciplineId}/quests', name: 'api_quests_list', methods: ['GET'])]
-    public function list(int $disciplineId, DisciplineTrackingRepository $disciplineTrackingRepository, ActivityRepository $activityRepository, #[CurrentUser] ?User $user): JsonResponse
+    public function list(int $disciplineId, DisciplineTrackingRepository $disciplineTrackingRepository, ActivityRepository $activityRepository, #[CurrentUser] User $user): JsonResponse
     {
-        if (!$user) {
-            return new JsonResponse(['error' => 'Not authenticated'], 401);
-        }
-
         $tracking = $disciplineTrackingRepository->findOneBy(['user' => $user, 'discipline' => $disciplineId]);
 
         if (!$tracking) {
@@ -49,24 +46,24 @@ class QuestController
     }
 
     #[Route('/api/character/{disciplineId}/quests', name: 'api_quests_create', methods: ['POST'])]
-    public function create(int $disciplineId, Request $request, EntityManagerInterface $em, DisciplineTrackingRepository $disciplineTrackingRepository, #[CurrentUser] ?User $user): JsonResponse
+    public function create(int $disciplineId, Request $request, EntityManagerInterface $em, DisciplineTrackingRepository $disciplineTrackingRepository, #[CurrentUser] User $user): JsonResponse
     {
-        if (!$user) {
-            return new JsonResponse(['error' => 'Not authenticated'], 401);
-        }
-
         $tracking = $disciplineTrackingRepository->findOneBy(['user' => $user, 'discipline' => $disciplineId]);
 
         if (!$tracking) {
             return new JsonResponse(['error' => 'Not tracked'], 404);
         }
 
-        $data = json_decode($request->getContent(), true);
-        $label = trim($data['label'] ?? '');
+        $data = JsonBody::decode($request);
+        $label = JsonBody::string($data, 'label') ?? '';
         $expValue = $data['expValue'] ?? null;
 
         if ($label === '' || !is_numeric($expValue) || (int) $expValue === 0) {
             return new JsonResponse(['error' => 'A label and a non-zero XP value are required'], 400);
+        }
+
+        if (mb_strlen($label) > 255 || abs((int) $expValue) > 1000) {
+            return new JsonResponse(['error' => 'Label must be 255 characters or less and XP between -1000 and 1000'], 400);
         }
 
         $quest = new Quest();
@@ -86,12 +83,8 @@ class QuestController
     }
 
     #[Route('/api/quests/{questId}', name: 'api_quests_delete', methods: ['DELETE'])]
-    public function delete(int $questId, EntityManagerInterface $em, QuestRepository $questRepository, #[CurrentUser] ?User $user): JsonResponse
+    public function delete(int $questId, EntityManagerInterface $em, QuestRepository $questRepository, #[CurrentUser] User $user): JsonResponse
     {
-        if (!$user) {
-            return new JsonResponse(['error' => 'Not authenticated'], 401);
-        }
-
         $quest = $questRepository->find($questId);
 
         if (!$quest || $quest->getDisciplineTracking()->getUser() !== $user) {
@@ -105,12 +98,8 @@ class QuestController
     }
 
     #[Route('/api/quests/{questId}/validate', name: 'api_quests_validate', methods: ['POST'])]
-    public function validate(int $questId, EntityManagerInterface $em, QuestRepository $questRepository, ActivityRepository $activityRepository, RankCalculator $rankCalculator, #[CurrentUser] ?User $user): JsonResponse
+    public function validate(int $questId, EntityManagerInterface $em, QuestRepository $questRepository, ActivityRepository $activityRepository, RankCalculator $rankCalculator, #[CurrentUser] User $user): JsonResponse
     {
-        if (!$user) {
-            return new JsonResponse(['error' => 'Not authenticated'], 401);
-        }
-
         $quest = $questRepository->find($questId);
 
         if (!$quest || $quest->getDisciplineTracking()->getUser() !== $user) {
@@ -148,12 +137,8 @@ class QuestController
     }
 
     #[Route('/api/quests/{questId}/validate', name: 'api_quests_unvalidate', methods: ['DELETE'])]
-    public function unvalidate(int $questId, EntityManagerInterface $em, QuestRepository $questRepository, ActivityRepository $activityRepository, RankCalculator $rankCalculator, #[CurrentUser] ?User $user): JsonResponse
+    public function unvalidate(int $questId, EntityManagerInterface $em, QuestRepository $questRepository, ActivityRepository $activityRepository, RankCalculator $rankCalculator, #[CurrentUser] User $user): JsonResponse
     {
-        if (!$user) {
-            return new JsonResponse(['error' => 'Not authenticated'], 401);
-        }
-
         $quest = $questRepository->find($questId);
 
         if (!$quest || $quest->getDisciplineTracking()->getUser() !== $user) {
@@ -205,12 +190,8 @@ class QuestController
     }
 
     #[Route('/api/character/{disciplineId}/quests/from-template/{templateId}', name: 'api_quests_create_from_template', methods: ['POST'])]
-    public function createFromTemplate(int $disciplineId, int $templateId, EntityManagerInterface $em, DisciplineTrackingRepository $disciplineTrackingRepository, QuestTemplateRepository $questTemplateRepository, #[CurrentUser] ?User $user): JsonResponse
+    public function createFromTemplate(int $disciplineId, int $templateId, EntityManagerInterface $em, DisciplineTrackingRepository $disciplineTrackingRepository, QuestTemplateRepository $questTemplateRepository, #[CurrentUser] User $user): JsonResponse
     {
-        if (!$user) {
-            return new JsonResponse(['error' => 'Not authenticated'], 401);
-        }
-
         $tracking = $disciplineTrackingRepository->findOneBy(['user' => $user, 'discipline' => $disciplineId]);
 
         if (!$tracking) {

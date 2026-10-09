@@ -36,8 +36,11 @@ security:
 
     # Note: Only the *first* matching rule is applied
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+        # Routes publiques : inscription, connexion et catalogue des disciplines
+        - { path: ^/api/(register|login_check)$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/disciplines, roles: PUBLIC_ACCESS, methods: [GET] }
+        # Tout le reste de l'API exige un token JWT valide (sinon 401)
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
 when@test:
     security:
         password_hashers:

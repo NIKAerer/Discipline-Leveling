@@ -12,12 +12,8 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 class DashboardController
 {
     #[Route('/api/dashboard', name: 'api_dashboard', methods: ['GET'])]
-    public function show(DisciplineTrackingRepository $disciplineTrackingRepository, RankCalculator $rankCalculator, #[CurrentUser] ?User $user): JsonResponse
+    public function show(DisciplineTrackingRepository $disciplineTrackingRepository, RankCalculator $rankCalculator, #[CurrentUser] User $user): JsonResponse
     {
-        if (!$user) {
-            return new JsonResponse(['error' => 'Not authenticated'], 401);
-        }
-
         $trackings = $disciplineTrackingRepository->findBy(['user' => $user]);
 
         $disciplines = [];
