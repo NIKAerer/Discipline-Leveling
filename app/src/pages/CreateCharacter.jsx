@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { extractErrorMessage } from '../utils/api'
+import { apiFetch, extractErrorMessage } from '../utils/api'
 import avatar1 from '../assets/avatars/avatar-1.svg'
 import avatar2 from '../assets/avatars/avatar-2.svg'
 import avatar3 from '../assets/avatars/avatar-3.svg'
@@ -21,14 +21,13 @@ function CreateCharacter() {
     const navigate = useNavigate()
 
     useEffect(() => {
-        fetch('http://localhost:8000/api/disciplines')
+        apiFetch('/api/disciplines')
             .then((response) => response.json())
             .then((data) => setDisciplines(data))
     }, [])
 
     useEffect(() => {
-        const token = localStorage.getItem('token')
-        fetch('http://localhost:8000/api/character', { headers: { 'Authorization': `Bearer ${token}` } })
+        apiFetch('/api/character')
             .then((response) => response.json())
             .then((data) => {
                 const alreadyTrackedIds = data.map((tracking) => tracking.disciplineId)
@@ -43,12 +42,10 @@ function CreateCharacter() {
     async function handleSubmit(e) {
         e.preventDefault()
         if (!selectedAvatar) { setError('Choose an avatar'); return }
-        const token = localStorage.getItem('token')
         const payload = selectedDisciplines.map((disciplineId) => ({ disciplineId, goal: '' }))
         try {
-            const response = await fetch('http://localhost:8000/api/character', {
+            const response = await apiFetch('/api/character', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ avatar: selectedAvatar, disciplines: payload }),
             })
             if (!response.ok) {
@@ -56,7 +53,7 @@ function CreateCharacter() {
                 return
             }
             navigate('/dashboard')
-        } catch { setError('Server error — is the API running on localhost:8000?') }
+        } catch { setError('Unable to reach the server. Please try again later.') }
     }
 
     return (

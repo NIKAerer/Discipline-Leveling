@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import NavBar from '../components/NavBar'
-import { extractErrorMessage } from '../utils/api'
+import HistoryPanel from '../components/HistoryPanel'
+import { apiFetch, extractErrorMessage } from '../utils/api'
 
 function QuestSection({ title, danger, items, onToggle, adding, onOpenAdd, onCloseAdd, templates, onAddFromTemplate, newLabel, setNewLabel, newXp, setNewXp, onSubmitCustom, formError }) {
     return (
@@ -104,41 +105,40 @@ function DisciplineDetail() {
     const [newLabel, setNewLabel] = useState('')
     const [newXp, setNewXp] = useState('10')
     const [formError, setFormError] = useState('')
+    const [history, setHistory] = useState(null)
 
-    const token = localStorage.getItem('token')
+    const loadHistory = useCallback(() => {
+        apiFetch(`/api/history?disciplineId=${id}`)
+            .then((response) => (response.ok ? response.json() : null))
+            .then((data) => setHistory(data))
+    }, [id])
 
     useEffect(() => {
-        fetch(`http://localhost:8000/api/character/${id}`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-        })
+        apiFetch(`/api/character/${id}`)
             .then((response) => response.json())
             .then((data) => {
                 setDiscipline(data)
                 setGoal(data.goal || '')
             })
 
-        fetch(`http://localhost:8000/api/character/${id}/quests`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-        })
+        apiFetch(`/api/character/${id}/quests`)
             .then((response) => response.json())
             .then((data) => setQuests(data))
 
-        fetch(`http://localhost:8000/api/disciplines/${id}/quest-templates`)
+        apiFetch(`/api/disciplines/${id}/quest-templates`)
             .then((response) => response.json())
             .then((data) => setTemplates(data))
-    }, [id, token])
+
+        loadHistory()
+    }, [id, loadHistory])
 
     async function handleSave(e) {
         e.preventDefault()
         setSaved(false)
         setError('')
 
-        const response = await fetch(`http://localhost:8000/api/character/${id}`, {
+        const response = await apiFetch(`/api/character/${id}`, {
             method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
             body: JSON.stringify({ goal }),
         })
 
@@ -154,9 +154,8 @@ function DisciplineDetail() {
         const method = quest.validatedToday ? 'DELETE' : 'POST'
 
         try {
-            const response = await fetch(`http://localhost:8000/api/quests/${quest.id}/validate`, {
+            const response = await apiFetch(`/api/quests/${quest.id}/validate`, {
                 method,
-                headers: { 'Authorization': `Bearer ${token}` },
             })
 
             if (!response.ok) {
@@ -172,7 +171,9 @@ function DisciplineDetail() {
                 ...prev,
                 exp: data.disciplineExp,
                 rank: data.disciplineRank,
+                progressPercent: data.disciplineProgressPercent,
             }))
+            loadHistory()
         } catch {
             // Silent — the checkbox just won't move, which is enough signal here.
         }
@@ -194,9 +195,8 @@ function DisciplineDetail() {
         setFormError('')
 
         try {
-            const response = await fetch(`http://localhost:8000/api/character/${id}/quests/from-template/${template.id}`, {
+            const response = await apiFetch(`/api/character/${id}/quests/from-template/${template.id}`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
             })
 
             if (!response.ok) {
@@ -208,7 +208,7 @@ function DisciplineDetail() {
             setQuests((prev) => [...prev, created])
             closeAdd()
         } catch {
-            setFormError('Server error — is the API running on localhost:8000?')
+            setFormError('Unable to reach the server. Please try again later.')
         }
     }
 
@@ -227,9 +227,8 @@ function DisciplineDetail() {
         const expValue = addingType === 'malus' ? -magnitude : magnitude
 
         try {
-            const response = await fetch(`http://localhost:8000/api/character/${id}/quests`, {
+            const response = await apiFetch(`/api/character/${id}/quests`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ label, expValue }),
             })
 
@@ -242,7 +241,7 @@ function DisciplineDetail() {
             setQuests((prev) => [...prev, created])
             closeAdd()
         } catch {
-            setFormError('Server error — is the API running on localhost:8000?')
+            setFormError('Unable to reach the server. Please try again later.')
         }
     }
 
@@ -304,6 +303,8 @@ function DisciplineDetail() {
                     {error && <p className="msg-error" style={{ marginTop: '16px' }}>{error}</p>}
                     {saved && <p className="msg-success" style={{ marginTop: '16px' }}>Saved!</p>}
                 </div>
+
+                {history && <HistoryPanel history={history} />}
 
                 <div style={{ marginBottom: '32px' }}>
                     <QuestSection
