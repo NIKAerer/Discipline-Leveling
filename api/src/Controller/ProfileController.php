@@ -4,7 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Http\JsonBody;
-use App\Repository\DisciplineTrackingRepository;
+use App\Service\AccountDeleter;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -36,7 +36,7 @@ class ProfileController
             $name = JsonBody::string($data, 'name') ?? '';
 
             if ($name === '' || mb_strlen($name) > 50) {
-                return new JsonResponse(['error' => 'Name must be between 1 and 50 characters'], 400);
+                return new JsonResponse(['error' => 'Le pseudo doit faire entre 1 et 50 caractères'], 400);
             }
 
             $user->setName($name);
@@ -46,7 +46,7 @@ class ProfileController
             $email = strtolower(JsonBody::string($data, 'email') ?? '');
 
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                return new JsonResponse(['error' => 'Email is not valid'], 400);
+                return new JsonResponse(['error' => 'Adresse email invalide'], 400);
             }
 
             if ($email !== $user->getEmail()) {
@@ -59,7 +59,7 @@ class ProfileController
         try {
             $em->flush();
         } catch (UniqueConstraintViolationException $e) {
-            return new JsonResponse(['error' => 'This name or email is already taken'], 409);
+            return new JsonResponse(['error' => 'Ce pseudo ou cet email est déjà utilisé'], 409);
         }
 
         return new JsonResponse([
@@ -70,30 +70,9 @@ class ProfileController
     }
 
     #[Route('/api/profile', name: 'api_profile_delete', methods: ['DELETE'])]
-    public function delete(EntityManagerInterface $em, DisciplineTrackingRepository $disciplineTrackingRepository, #[CurrentUser] User $user): JsonResponse
+    public function delete(AccountDeleter $accountDeleter, #[CurrentUser] User $user): JsonResponse
     {
-        // No cascade/orphanRemoval is configured between User and DisciplineTracking,
-        // so the related rows (and their own Quest/Activity children) are removed
-        // by hand, in dependency order, before the user itself.
-        $trackings = $disciplineTrackingRepository->findBy(['user' => $user]);
-
-        foreach ($trackings as $tracking) {
-            foreach ($tracking->getQuests() as $quest) {
-                foreach ($quest->getActivities() as $activity) {
-                    $em->remove($activity);
-                }
-                $em->remove($quest);
-            }
-
-            foreach ($tracking->getLolMatches() as $lolMatch) {
-                $em->remove($lolMatch);
-            }
-
-            $em->remove($tracking);
-        }
-
-        $em->remove($user);
-        $em->flush();
+        $accountDeleter->delete($user);
 
         return new JsonResponse(['message' => 'Account deleted']);
     }
