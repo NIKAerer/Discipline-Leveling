@@ -10,7 +10,7 @@ Projet personnel réalisé par **Nika**, développeur web junior (BTS SIO SLAM).
 
 ## Essayer la démo
 
-**Démo en ligne : _lien ajouté après le premier déploiement_**
+**Démo en ligne : [discipline-leveling.vercel.app](https://discipline-leveling.vercel.app)**
 
 Sur la page d'accueil, le bouton **« Essayer la démo »** remplit le formulaire de connexion avec ce compte :
 
